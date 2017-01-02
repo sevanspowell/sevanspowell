@@ -1,0 +1,50 @@
+#+SETUPFILE: ../org-templates/posts.org
+#+MACRO: POST_TITLE Publishing a Website in Org-Mode
+#+INCLUDE: ../org-templates/posts_header.org
+
+Static site generators such as pelican [insert link] and Jekyll [? insert link]
+allow you to write website content in plain text formats like Markdown and
+quickly convert that content into webpages. You can do the same with org-mode!
+All without leaving the safety of your Emacs application.
+
+This guide is based off work by Bernt Hansen and his awesome org-mode post [[http://doc.norang.ca/org-mode.html#Publishing][here]],
+with help from [[http://orgmode.org/worg/org-tutorials/org-publish-html-tutorial.html#Special-comment-section][this]] org-mode tutorial. The [[https://www.gnu.org/software/emacs/manual/html_node/org/Publishing.html][org-mode manual]] is also very helpful
+on this topic and is well worth a read.
+
+This post won't be an introduction to Emacs [insert link] or [[http://spacemacs.org][Spacemacs]], and
+since I'll be using [[http://spacemacs.org][Spacemacs]], instructions might be a little bit different if
+you're using Emacs. 
+
+This website is published using org-mode and can be found [[https://github.com/sevanspowell/sevanspowell][here]]. My dotfiles
+(including my .spacemacs file) can be found [[https://github.com/sevanspowell/dotfiles][here]].
+
+** Getting started
+
+To get started, let's go ahead and create a website folder.
+
+: my-website/
+:    |- css/                     ;; We'll keep css files here 
+:    |  `- stylesheet.css        ;; Website stylesheet
+:    |- img/                     ;; We'll keep image files here
+:    `- index.org                ;; Our website homepage
+
+** Generating Figures
+*** Ditaa
+*** PlantUML
+
+** Navigation
+
+** From here
+
+You can do many more awesome things with publishing in org-mode. I found looking
+at the source files for the [[http://orgmode.org][org-mode website]] extremely helpful (it's all
+published using org!). You can find the source [[http://orgmode.org/worg/sources/][here]] and a description of how the
+website is published [[http://orgmode.org/worg/worg-setup.html][here]]. 
+
+** External links
+   - [[http://spacemacs.org][Spacemacs]]
+   - [[https://github.com/sevanspowell/sevanspowell][Site GitHub]]
+   - [[https://github.com/sevanspowell/dotfiles][My dotfiles]]
+   - [[http://orgmode.org/worg/index.html][Helpful Org-mode site]]
+   - [[http://doc.norang.ca/org-mode.html#Publishing][Norang publishing tutorial]]
+   - [[http://orgmode.org/worg/sources/][Org-mode site source]]

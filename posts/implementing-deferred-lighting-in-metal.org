@@ -1,0 +1,65 @@
+#+SETUPFILE: ../org-templates/posts.org
+#+MACRO: POST_TITLE Implementing Deferred Lighting in Metal 
+#+INCLUDE: ../org-templates/posts_header.org
+
+** Purpose
+
+** Process 
+
+- First we start with a 'Geometry Buffer' (or 'GBuffer') pass, this pass renders
+  the scene geometry to multiple textures (diffuse, normal, depth,
+  xyz-position - one texture for each).
+  [[http://marcinignac.com/blog/deferred-rendering-explained/][This post]] provides a good visual explanation of this idea.
+- Next, for each light volume, we perform a 'stencil pass', where we populate
+  the stencil buffer.
+- Next, we make the lighting pass. The lights are rendered and the fragment
+  shader of the lighting pass shades each fragment using information from the
+  GBuffer pass. Only those fragments covered by the light are shaded. Further,
+  only those fragments that pass the stencil buffer test are shaded (this is
+  where we use the data in the stencil buffer.
+- Finally, we blit the shaded image to the screen.
+
+CONVERT this to diagram
+Depth Stencil Diffuse Normal Depth Position textures
+|||        |
+GBuffer -> Stencil -> Lighting ->(Blit) Screen
+
+** Implementation
+
+The concept is actually quite simple, implementing it can be a little tricky,
+especially when using a framework you're not familiar with. 
+
+/Disclaimer: There might be some bugs with this implementation that I haven't
+discovered yet./ 
+
+Ok, let's start with the resources we'll need
+- 1x Depth/Stencil texture
+- 1x diffuse texture buffer
+- 1x normal texture buffer
+- etc..
+
++#BEGIN_SRC lua 
+var 
+#+END_SRC
+
+- Render 3D sphere to determine which fragments will be affected by light
+- Calculate radius of light using following formula:
+- Use stencil buffer to determine which fragments fall inside the sphere (sphere
+  may cover fragments outside sphere that should not be shaded.
+
+*** An aside on gamma correction
+
+Gamma correction, it's so important:
+
+@@html:<iframe width="560" height="315" src="https://www.youtube.com/embed/LKnqECcg6Gw" frameborder="0" allowfullscreen></iframe>@@
+
+Further reading:
+- [[http://http.developer.nvidia.com/GPUGems3/gpugems3_ch24.html][GPU Gems 3: The Importance of Being Linear (2008)]]
+- [[http://www.codinglabs.net/article_gamma_vs_linear.aspx][Coding Labs: Gamma and Linear Spaces]]
+- [[http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php][Gamasutra: Gamma-Correct Lighting (2010)]]
+
+/[[http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/][Thanks Marcin Ignac]]/
+
+** External links
+  - [[http://ogldev.atspace.co.uk/www/tutorial35/tutorial35.html][OGLDev]] 
+  - [[http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/][Marcin Ignac's Blog - Gamma and Lighting]]

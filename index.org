@@ -1,0 +1,13 @@
+#+SETUPFILE: ./org-templates/level-0.org
+#+TITLE: Samuel Evans-Powell
+
+* About
+   - Email: samueldavid.ep@gmail.com
+   - GitHub: [[https://github.com/sevanspowell][sevanspowell]]
+   - Twitter: [[https://twitter.com/sevanspowell][@sevanspowell]]
+* Projects
+  - [[file:projects/deferred-lighting-in-metal.org][Deferred Lighting in Metal]]
+* Posts
+  - [[file:posts/getting-started-with-low-level-graphics-programming][Getting Started with Low-Level Graphics Programming]]
+  - [[file:posts/implementing-deferred-lighting-in-metal.org][Implementing Deferred Lighting in Metal]]
+  - [[file:posts/publishing-a-website-in-org-mode.org][Publishing a Website in Org-mode]]

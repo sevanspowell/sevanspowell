@@ -1,0 +1,18 @@
+#+SETUPFILE: ../org-templates/projects.org
+#+INCLUDE: ../org-templates/projects_header.org
+
+* Deferred Lighting in Metal
+
+[[file:../img/deferred.png]]
+
+** Things learnt:
+
+- Deferred rendering
+- Core functionally of Apple's Metal API
+- Use of the stencil buffer
+- Multiple render targets / render to texture
+
+I plan to do a blog post about this project, check back soon!
+
+** External links
+- [[https://github.com/sevanspowell/MetalDeferredLighting][GitHub]]
