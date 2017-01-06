@@ -1,0 +1,26 @@
+#+SETUPFILE: ../org-templates/projects.org
+#+INCLUDE: ../org-templates/projects_header.org
+
+* Sane 
+
+/A simple POSIX shell implemented in C/
+
+[[file:../img/sane.png]]
+
+** Things learnt:
+
+- Designing larger programs in C.
+- POSIX API.
+- Automated testing using the [[http://expect.sourceforge.net][expect]] command-line tool, importance of good testing.
+- Tracking issues using GitHub's web tools.
+
+The shell is functional and fairly robust, but what I was most proud of was the
+way I approached testing the shell. I created an [[http://expect.sourceforge.net][expect]] script which
+allowed me to automate the running of a number of use cases. I used this script
+to run full regression tests whenever I made changes. This allowed me to be
+confident about the stability of the codebase at all times.
+
+[[https://github.com/sevanspowell/sane/blob/master/test/test.sh][Test script]]
+
+** External links
+- [[https://github.com/sevanspowell/sane][GitHub]]

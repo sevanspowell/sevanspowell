@@ -1,0 +1,117 @@
+#+SETUPFILE: ../org-templates/projects.org
+#+INCLUDE: ../org-templates/projects_header.org
+
+* Draygon Tensor 
+
+/A game engine developed with three others as part of a university project./
+
+@@html:<iframe width="560" height="315"
+src="https://www.youtube.com/embed/wDD68iO0O_M" frameborder="0"
+allowfullscreen></iframe>@@
+
+*** Things Learnt:
+
+- How to apply forces to rigid bodies and calculate their resulting linear and angular motion.
+- Physics engine architecture.
+- How data-oriented design increases flexibility and decreases iteration time.
+- How to develop external tools for a game engine.
+- The importance of a solid build system.
+- Group and time management.
+
+Some of my responsibilities included:
+
+** Engine architecture 
+
+The engine is a fairly lightweight class that aggregates systems. Systems are a
+collection of functionality that contain and operate on some data. Systems
+communicate with one another using the message bus, the engine class is
+responsible for passing those messages between systems. An entity-component
+system is used to manage, and provide functionality to, objects in the scene.
+
+For example, the 'Physics' system may own a number of physics components. These
+physics components contain information about the physical properties of an
+object (e.g. inertia tensor). The physics system interfaces with a physics
+engine to update these physics components. The physics system then sends
+messages to other systems in the engine, so they can update their components if
+necessary.
+
+This architecture was inspired by Randy Gaul (and his series of articles [[http://www.randygaul.net/2013/05/20/component-based-engine-design/][here]]),
+Niklas Frykholm (especially his entity-component system articles [[http://bitsquid.blogspot.com.au/2014/08/building-data-oriented-entity-system.html][here]]), and
+various posts from Sean Middleditch ([[http://seanmiddleditch.com][blog]]).
+
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/Engine.cpp][Engine class]]
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/ISystem.h][System interface]]
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/message/MessageBus.cpp][Message bus class]]
+
+** Developing data formats
+
+I was responsible for developing the data formats the engine uses.
+
+The engine is almost completely data-driven; startup parameters are specified in
+a 'config.json' file, the functionality of the game is specified in a Lua file
+(which has access to a number of exposed engine methods), '.prefab' files
+specify how to construct objects in the scene and '.material', '.shader',
+'.texture', and '.mesh' files specify the properties of those objects (these are
+all custom json-formats).
+
+- [[https://gist.github.com/sevanspowell/d70e3702cc96abf42ec23f49b46a557b][Example .prefab file]]
+- [[https://gist.github.com/sevanspowell/e1ea6b8dab2c31ac2789d98234f18936][Example config.json]]
+
+** Cross-platform build system
+
+I used CMake to create the build system for the project, all required
+dependencies are downloaded as part of the build (if required).
+
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/cmake/superbuild/Superbuild.cmake][Superbuild.cmake]]
+
+** Physics
+
+Our physics engine was based off the [[https://github.com/idmillington/cyclone-physics][cyclone physics engine]].
+
+I was responsible for integrating our physics engine with the game engine and
+also worked on various parts of the physics engine.
+
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/physics/Physics.cpp][Physics/game engine integration]]
+- [[https://github.com/sevanspowell/DraygonTensor/tree/develop/src/engine/system/physics][Physics engine]]
+
+** Scripting
+
+Lua was used as a scripting language for the engine. I was responsible for
+integrating Lua into the game engine and creating and documenting the Lua
+bindings.
+
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/script/Script.cpp][Lua game engine integration]]
+- [[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/physics/PhysicsLuaBindings.cpp][An example of some Lua bindings]]
+- [[https://sevanspowell.github.io/DraygonTensor-api/][Lua API documentation]]
+- [[https://gist.github.com/sevanspowell/67f008b1836ef4c92b889f551f8f0e99][An example Lua script]]
+
+** Blender plugins
+
+*** Export script
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L487][__init__.py]]
+
+I developed a Blender script that takes an entire Blender scene and outputs it
+in a format our game engine expects.
+
+*** Affordance plugin
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L96][__init.py]]
+
+The affordance plugin allows us to specify the affordances of an object using
+the Blender UI.
+
+[[../img/affordancesClose.png]]
+
+*** Rigid body plugin
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L171][__init__.py]]
+
+The rigid body plugin allows a user to add collision shapes, mass and inertia
+tensor properties to an object using Blender's UI.
+
+[[../img/rigidbodyClose.png]]
+
+** Math library
+
+I was also responsible for creating and testing the math library.
+
+- [[https://github.com/sevanspowell/DraygonTensor/tree/develop/src/math][Math Library]]
+- [[https://github.com/sevanspowell/DraygonTensor/tree/develop/test/src/math][Tests using GoogleTest library]]
