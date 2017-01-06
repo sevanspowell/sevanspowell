@@ -1,6 +1,8 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Implementing Deferred Lighting in Metal 
+#+MACRO: POST_TITLE Implementing Deferred Lighting in Metal - RENAME TO DEFERRED SHADING
 #+INCLUDE: ../org-templates/posts_header.org
+
+* RENAME TO DEFERRED SHADING
 
 ** Purpose
 
@@ -1231,8 +1233,57 @@ cube facing away from the lights is still getting shaded? That might seem
 erroneous but that case will be handled in our shaders, which won't shade
 triangles facing away from the light source.
 
-Obviously these are not the kind of shaders you'd normally use, but they get the
-point across.
+Obviously these are not the kind of shaders you'd normally use, they're only for
+demonstration purposes.
+
+*** Improving those shaders
+
+We have all that information from the GBuffer available to us in our shaders,
+let's use it!
+
+At this point I decided to change the cube mesh to a sphere so I could better 
+see the effect of the lights. I also tweaked the light positions:
+
+#+NAME: Renderer.swift
+#+BEGIN_SRC swift
+  init?(mtkView: MTKView) {
+    // ...
+
+    // Compile the functions and other state into a pipeline object.
+    do {
+        renderPipelineState = try Renderer.buildRenderPipelineWithDevice(device, view: mtkView)
+    }
+    catch {
+        print("Unable to compile render pipeline state")
+        return nil
+    }
+
+    mesh = Mesh(cubeWithSize: 1.0, device: device)!
+
+    // ...
+
+    // Hard-code position and radius
+    lightProperties[0].worldPosition = float3(0.0, 0.4, 0.0)
+    lightProperties[0].radius = 1.0
+
+    lightProperties[1].worldPosition = float3(-0.4, 0.0, 0.0)
+    lightProperties[1].radius = 1.0
+  }
+#+END_SRC
+
+INSERT_IMAGE
+
+Notice the wobbly edges of the light volume? It looks like that because we're
+using a low number of segments for our sphere mesh. You can increase the number
+of segments in your 'Mesh.swift' file, but they won't be noticable when we do
+the lighting calculations (lighting contributions at the edge of the light
+volume should approach 0).
+
+*** A better clear colour
+
+I don't really like black as a clear colour, it makes it more difficult to see
+when something isn't rendering properly. Grey is much better. Unfortunately
+setting a clear colour other than black isn't so simple with deferred rendering.
 
 *** An aside on gamma correction
 insert aside here ...
