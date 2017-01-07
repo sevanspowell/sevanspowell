@@ -1,8 +1,6 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Implementing Deferred Lighting in Metal - RENAME TO DEFERRED SHADING
+#+MACRO: POST_TITLE Implementing Deferred Shading in Metal
 #+INCLUDE: ../org-templates/posts_header.org
-
-* RENAME TO DEFERRED SHADING
 
 ** Purpose
 
@@ -40,7 +38,7 @@ Note that I've tried to code this explicitly as I can, I've avoided
 encapsulating some of these things into functions so that you can see what's
 going on more clearly. I also do a nominal amount of error-checking.
 
-- I started with the sample code from [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/Introduction/Intro.html][Apple's Adopting Metal I]] sample.
+I started with the sample code from [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/Introduction/Intro.html][Apple's Adopting Metal I]] sample:
 - Download the [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/AdoptingMetalIApracticalapproachtoyourfirstMetalapp.zip][sample code]].
 - Open the project in Xcode.
 - Click on the "Metal Textured Mesh" project in the Project Navigator.
@@ -860,7 +858,7 @@ existing one:
 
 Ok, next we'll need to configure the behaviour of the stencil pass:
 
-#+NAME Renderer.swift
+#+NAME: Renderer.swift
 #+BEGIN_SRC swift
   // ...
   let stencilPassDepthStencilState: MTLDepthStencilState
@@ -1011,7 +1009,7 @@ is filled for now.
 
 Let's start off with some simplified shaders for our lighting pass:
 
-#+NAME Shaders.metal
+#+NAME: Shaders.metal
 #+BEGIN_SRC swift
   // ...
   vertex StencilPassOut stencilPassVert(const device VertexIn *vertices [[buffer(0)]],
@@ -1263,7 +1261,7 @@ see the effect of the lights. I also tweaked the light positions:
     // ...
 
     // Hard-code position and radius
-    lightProperties[0].worldPosition = float3(0.0, 0.4, 0.0)
+    lightProperties[0].worldPosition = float3(1, 1, 1.5)
     lightProperties[0].radius = 1.0
 
     lightProperties[1].worldPosition = float3(-0.4, 0.0, 0.0)
@@ -1273,11 +1271,144 @@ see the effect of the lights. I also tweaked the light positions:
 
 INSERT_IMAGE
 
-Notice the wobbly edges of the light volume? It looks like that because we're
-using a low number of segments for our sphere mesh. You can increase the number
-of segments in your 'Mesh.swift' file, but they won't be noticable when we do
-the lighting calculations (lighting contributions at the edge of the light
+Notice the wobbly edges of the light volume? It looks like that because of the
+low number of segments we're using in our sphere mesh. You can increase the
+number of segments in your 'Mesh.swift' file, but they won't be noticable when
+we do the lighting calculations (lighting contributions at the edge of the light
 volume should approach 0).
+
+I am hard-coding the radii here. You can calculate the radius of the sphere
+based on fall-off, but I think this article is big enough for now. A good
+explanation of how to calculate the radius of a light volume is given in
+[[http://ogldev.atspace.co.uk/www/tutorial36/tutorial36.html][this]] OGLDev tutorial.
+
+#+NAME: Shaders.metal
+#+BEGIN_SRC swift
+  // ...
+  struct LightFragmentInput {
+      float2 screenSize;
+      // We're going to need the camera's position to calculate specular lighting
+      float3 camWorldPos;
+  };
+
+  struct PointLight {
+      float3 worldPosition;
+      float radius;
+      float3 color;
+  };
+
+  fragment float4 lightVolumeFrag(StencilPassOut in [[stage_in]],
+                                  constant LightFragmentInput *lightData [[ buffer(0) ]],
+                                  constant PointLight *pointLight [[ buffer(1) ]],
+                                  texture2d<float> albedoTexture [[ texture(0) ]],
+                                  texture2d<float> normalsTexture [[ texture(1) ]],
+                                  texture2d<float> positionTexture [[ texture(2) ]])
+  {
+    // We sample albedo, normals and position from the position of this fragment, normalized to be 0-1 within screen space
+    float2 sampleCoords = in.position.xy / lightData->screenSize;
+
+    constexpr sampler texSampler;
+
+    // Extract data for this fragment from GBuffer textures
+    const float3 albedo = float3(albedoTexture.sample(texSampler, sampleCoords));
+    const float3 worldPosition = float3(positionTexture.sample(texSampler, sampleCoords));
+    const float3 normal = normalize(float3(normalsTexture.sample(texSampler, sampleCoords)));
+
+    const float3 lightDir = normalize(pointLight->worldPosition - worldPosition);
+
+    // Diffuse
+    const float nDotL = max(dot(normal, lightDir), 0.0);
+    const float3 diffuse = nDotL * albedo * pointLight->color;
+
+    float3 result = diffuse;
+
+    // Specular - if you want
+    //const float3 viewDir = normalize(lightData->camWorldPos - worldPosition);
+    //const float3 halfwayDir = normalize(lightDir + viewDir);
+    //const float3 specular = pow(max(dot(normal, halfwayDir), 0.0), 60.0) * 0.2;
+    //result = (diffuse + specular);
+
+    const float3 gammaCorrect = pow(float3(result), (1.0/2.2));
+    return float4(gammaCorrect, 1.0);    
+  }
+#+END_SRC
+
+#+NAME: Renderer.swift
+#+BEGIN_SRC swift
+  struct PointLight {
+      var worldPosition = float3(0.0, 0.0, 0.0)
+      var radius = Float(1.0)
+      var color = float3(1, 1, 1)
+  }
+
+  struct LightFragmentInput {
+      var screenSize = float2(1, 1)
+      var camWorldPos = float3(0.0, 0.0, 2.5)
+  }
+
+  @objc
+  class Renderer : NSObject, MTKViewDelegate
+  {
+    // ...
+    init?(mtkView: MTKView) {
+      // ...
+
+      // Add space for each light's data
+      for _ in 0...(lightNumber - 1) {
+          lightProperties.append(PointLight())
+          lightConstants.append(Constants())
+      }
+
+      // Hard-code position, radius, color
+      lightProperties[0].worldPosition = float3(1, 1, 1.5)
+      lightProperties[0].radius = 3
+      lightProperties[0].color = float3(1, 0, 0)
+
+      lightProperties[1].worldPosition = float3(-1, 1, 1.5)
+      lightProperties[1].radius = 3
+      lightProperties[1].color = float3(0, 1, 0)
+    }
+  }
+
+  // ...
+  func render(_ view: MTKView) {
+    // ...
+
+    // ---- LIGHTING ---- //
+    let lightPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: lightVolumeRenderPassDescriptor)
+    lightPassEncoder.pushDebugGroup("Light Volume Pass")
+    lightPassEncoder.label = "Light Volume Pass"
+    // Use our previously configured depth stencil state
+    lightPassEncoder.setDepthStencilState(lightVolumeDepthStencilState)
+    // Set our stencil reference value to 0 (in the depth stencil state we configured fragments to pass only if they are NOT EQUAL to the reference value
+    lightPassEncoder.setStencilReferenceValue(0)
+    // We cull the front of the spherical light volume and not the back, in-case we are inside the light volume. I'm not 100% certain this is the best way to do this, but it seems to work.
+    lightPassEncoder.setCullMode(.front)
+    lightPassEncoder.setFrontFacing(.counterClockwise)
+    lightPassEncoder.setRenderPipelineState(lightVolumeRenderPipeline)
+    // Bind our GBuffer textures
+    lightPassEncoder.setFragmentTexture(gBufferAlbedoTexture, at: 0)
+    lightPassEncoder.setFragmentTexture(gBufferNormalTexture, at: 1)
+    lightPassEncoder.setFragmentTexture(gBufferPositionTexture, at: 2)
+    lightPassEncoder.setVertexBuffer(lightSphere.vertexBuffer, offset:0, at:0)
+    // Upload our screen size
+    lightPassEncoder.setFragmentBytes(&lightFragmentInput, length: MemoryLayout<LightFragmentInput>.size, at: 0)
+    // Render light volumes
+    for i in 0...(lightNumber - 1) {
+        lightPassEncoder.setVertexBytes(&lightConstants[i], length: MemoryLayout<Constants>.size, at: 1)
+        // Upload light property data too
+        lightPassEncoder.setFragmentBytes(&lightProperties[i], length: MemoryLayout<PointLight>.size, at: 1)
+        lightPassEncoder.drawIndexedPrimitives(type: lightSphere.primitiveType, indexCount: lightSphere.indexCount, indexType: lightSphere.indexType, indexBuffer: lightSphere.indexBuffer, indexBufferOffset: 0)
+    }
+
+    lightPassEncoder.popDebugGroup()
+    lightPassEncoder.endEncoding()
+
+    // ...
+  }
+#+END_SRC
+
+INSERT IMAGE
 
 *** A better clear colour
 

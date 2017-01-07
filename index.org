@@ -6,10 +6,10 @@
    - GitHub: [[https://github.com/sevanspowell][sevanspowell]]
    - Twitter: [[https://twitter.com/sevanspowell][@sevanspowell]]
 * Projects
-  - [[file:projects/deferred-lighting-in-metal.org][Deferred Lighting in Metal]]
+  - [[file:projects/deferred-shading-in-metal.org][Deferred Shading in Metal]]
   - [[file:projects/draygon-tensor.org][University game engine project]]
   - [[file:projects/sane.org][A simple POSIX shell]]
 * Posts
+  - [[file:posts/implementing-deferred-shading-in-metal.org][Implementing Deferred Shading in Metal]]
   - [[file:posts/getting-started-with-low-level-graphics-programming.org][Getting Started with Low-Level Graphics Programming]]
-  - [[file:posts/implementing-deferred-lighting-in-metal.org][Implementing Deferred Lighting in Metal]]
   - [[file:posts/publishing-a-website-in-org-mode.org][Publishing a Website in Org-mode]]
