@@ -1,6 +1,7 @@
+<<top>>
 [[file:../index.org][< Home]]
 
 * {{{POST_TITLE}}} 
 
-#+TOC: headlines 3 local 
+#+TOC: headlines 4
 
