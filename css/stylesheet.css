@@ -7,10 +7,18 @@ body {
     background: #ddd none repeat scroll 0 0;
     /* border: 1px solid #000; */
     margin: 0;
-    padding: 2em;
+    padding: 1em;
+    padding-left: 8%;
+    padding-right: 8%;
     color: #000;
     font-family: "Bitstream Vera Sans", Verdana, sans-serif;
     font-size: 85%;
+}
+
+img{
+    max-width:100%;
+    height:auto;
+    display:block;
 }
 
 div#postamble {
@@ -22,15 +30,15 @@ code {
 }
 
 div#content {
-    border: 1px solid #bbb;
+    /*border: 1px solid #bbb;*/
     background: #fff;
     margin: 0;
     padding: 2em;
 }
 
 a {
-    color: #139;
-    text-decoration: none;
+    color: #263238;
+    text-decoration: underline;
     padding: 1px;
 }
 
@@ -43,7 +51,7 @@ div.home a {
 }
 
 a:hover {
-    color: #900;
+    color: #FF9100;
 }
 
 /*
@@ -54,7 +62,7 @@ a:visited {
 
 #table-of-contents {
     margin: 1em 0;
-    padding: 0.1em;
+    padding: 0.0em;
 }
 
 #text-table-of-contents {
@@ -88,7 +96,7 @@ div.title {
 }
 
 h1 {
-    background: #369 none repeat scroll 0 0;
+    background: #455A64 none repeat scroll 0 0;
     color: #fff;
     font-family: "BitStream Vera Sans", Verdana;
     font-size: 200%;
