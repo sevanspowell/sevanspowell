@@ -2,59 +2,97 @@
 #+MACRO: POST_TITLE Implementing Deferred Shading in Metal
 #+INCLUDE: ../org-templates/posts_header.org
 
-** Purpose
+* Introduction
 
-** Process 
+Deferred shading is a rendering technique usually used to optimize scenes with
+a large number of light sources. Rather than perform expensive lighting
+calcuations on every fragment in the scene, we 'defer' the lighting
+calculations to a later time, when we know which fragments are affected by which
+lights.
 
-- First we start with a 'Geometry Buffer' (or 'GBuffer') pass, this pass renders
-  the scene geometry to multiple textures (diffuse, normal, depth,
-  xyz-position - one texture for each).
-  [[http://marcinignac.com/blog/deferred-rendering-explained/][This post]] provides a good visual explanation of this idea.
-INSERT IMAGE
-- Next, for each light volume, we perform a 'stencil pass', where we populate
-  the stencil buffer.
-INSERT IMAGE
-- Next, we make the lighting pass. The lights are rendered and the fragment
-  shader of the lighting pass shades each fragment using information from the
-  GBuffer pass. Only those fragments covered by the light are shaded. Further,
-  only those fragments that pass the stencil buffer test are shaded (this is
-  where we use the data in the stencil buffer).
-INSERT IMAGE
-- Finally, we blit the shaded image to the screen.
+* Process
 
-CONVERT this to diagram
-Depth Stencil Diffuse Normal Depth Position textures
-GBuffer -> Stencil -> Lighting ->(Blit) Screen
+The process of my particular implementation of deferred shading is as follows:
 
-** Implementation
- 
+We first render the scene in what is known as the 'Geometry Buffer' or 'GBuffer'
+pass, where we gather information about a scene (such as albedo, normal, depth 
+and position information) and render it to separate textures.
+
+/The position, normal, world position and depth of a simple scene are shown below. Note that the normal and position textures look the same because the sphere is positioned at (0, 0, 0) and hence the position of each fragment is equivalent to that fragment's normal./
+
+
+[[../img/posts/implementing-deferred-shading-in-metal/gbuffer-data.png]]
+
+Next, we render the light volumes in the scene. The light volumes are pieces of
+geometry chosen to mimic the area-of-effect of a particular light. For example,
+a point light can be represented by a sphere mesh. The radius of the sphere mesh
+should be such that the light contribution provided by that light at the edge of
+the mesh be 0.
+
+/A visualization of the lights in the example scene:/
+
+
+[[../img/posts/implementing-deferred-shading-in-metal/lights-normal-fake.png]]
+
+When we render the light volumes, we use the GBuffer pass's unmodified depth
+texture as as the render pass's depth texture, this allows us to compare the
+depth of the light volumes with the scene depth. We also render both the front
+and back faces of the light volume. If a front-face fails the depth test, we
+increment the stencil buffer value at that point. If a back-face fails the depth
+test, we decrement the stencil buffer value at that point. This way, fragments
+within a light volume have a value of 1 in the stencil buffer and all other
+fragments have a value of 0 (A visual explanation of this stencil buffer
+algorithm can be found [[http://ogldev.atspace.co.uk/www/tutorial37/tutorial37.html][here]]).
+
+/Red represents pixels that are within the light volume:/
+
+
+[[../img/posts/implementing-deferred-shading-in-metal/stencil-buffer.png]]
+
+Finally, we combine all the information we've gathered so far and perform the
+lighting calculations. The depth test has already determined that these
+fragments are the fragments that can be seen by the camera and the stencil pass
+has allowed us to determine which fragments are actually within (and so affected
+by) the lights. As a result, the number of expensive lighting calculations we
+have to perform is minimized, helping us to improve our render performance.
+
+The final result looks something like this:
+
+
+[[../img/posts/implementing-deferred-shading-in-metal/final.png]]
+
+* Implementation
+
 The concept is actually quite simple, implementing it can be a little tricky,
-especially when using a framework you're not familiar with. 
+especially when using a framework you're not familiar with.
 
 /Disclaimer: There might be some bugs with this implementation that I haven't
-discovered yet./ 
+discovered yet./
 
 Note that I've tried to code this explicitly as I can, I've avoided
 encapsulating some of these things into functions so that you can see what's
 going on more clearly. I also do a nominal amount of error-checking.
 
-I started with the sample code from [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/Introduction/Intro.html][Apple's Adopting Metal I]] sample:
-- Download the [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/AdoptingMetalIApracticalapproachtoyourfirstMetalapp.zip][sample code]].
+To follow along with the rest of this tutorial, do the following:
+- Download the [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/AdoptingMetalIApracticalapproachtoyourfirstMetalapp.zip][sample code]] (I started with the sample code from [[https://developer.apple.com/library/content/samplecode/AdoptingMetalI/Introduction/Intro.html][Apple's Adopting Metal I]] sample).
 - Open the project in Xcode.
 - Click on the "Metal Textured Mesh" project in the Project Navigator.
 - Choose a development team under "General > Signing".
-- Run the project 
-  - You should see a rotating cube with a checkerboard texture on a white background
+- Run the project
 
-You might also find it easier to follow with the finished program in hand: [[https://github.com/sevanspowell/MetalDeferredLightingTutorial][MetalDeferredLightingTutorial]]. 
+You should see a rotating cube with a checkerboard texture on a white
+background. You might also find it easier to follow along with the finished
+program in hand: [[https://github.com/sevanspowell/MetalDeferredLightingTutorial][MetalDeferredLightingTutorial]].
 
-*** GBuffer Pass
+** GBuffer pass
 
-Let's setup our GBuffer pass, for now, we'll just render the scene albedo and depth.
+*** Albedo and depth
+
+Let's setup our GBuffer pass. For now, we'll just render the scene albedo and depth.
 
 We'll need a few resources to start us off:
 
-#+NAME: Renderer.swift 
+_Renderer.swift_
 #+BEGIN_SRC swift
     @objc
     class Renderer : NSObject, MTKViewDelegate
@@ -108,7 +146,7 @@ We'll need a few resources to start us off:
             // Then we create the depth/stencil state
             gBufferDepthStencilState = device.makeDepthStencilState(descriptor: gBufferDepthStencilStateDescriptor)
 
-            // Create GBuffer render pass descriptor 
+            // Create GBuffer render pass descriptor
             gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
             // Specify the properties of the first color attachment (our albedo texture)
             gBufferRenderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
@@ -150,7 +188,7 @@ We'll need a few resources to start us off:
 
 You'll also want to add the following lines to your "Shaders.metal" file:
 
-#+NAME: Shaders.metal
+_Shaders.metal_
 #+BEGIN_SRC c++
 
   struct GBufferOut {
@@ -193,7 +231,7 @@ You'll also want to add the following lines to your "Shaders.metal" file:
 To actually do anything with all this, we'll need to almost completely replace
 our render function:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func render(_ view: MTKView) {
           // Our animation will be dependent on the frame time, so that regardless of how
@@ -264,14 +302,16 @@ our render function:
 
 You should see the following image on screen:
 
-[[file:../img/albedo.png]]
+[[file:../img/posts/implementing-deferred-shading-in-metal/albedo.png]]
 
 Great, that's step 1. Let's move on to rendering the normal and position data to
 a texture.
 
-First, the normal data. Add a normal texture to the renderer.
+*** Normal and position
 
-#+NAME: Renderer.swift
+First, the normal data. Add a normal texture to the renderer:
+
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   var time = TimeInterval(0.0)
@@ -339,10 +379,11 @@ First, the normal data. Add a normal texture to the renderer.
           fatalError("Failed to create GBuffer pipeline state, error \(error)")
       }
 
+      // ...
   }
 #+END_SRC
 
-#+NAME: Shaders.metal
+_Shaders.metal_
 #+BEGIN_SRC swift
 // ...
   struct GBufferOut {
@@ -357,9 +398,9 @@ fragment GBufferOut gBufferFrag(VertexOut in [[stage_in]],
 {
     constexpr sampler linear_sampler(min_filter::linear, mag_filter::linear);
     float4 albedo = albedo_texture.sample(linear_sampler, in.texCoords);
-    
+
     GBufferOut output;
-    
+
     output.albedo = albedo;
     output.normal = float4(in.normal, 1.0); // Add the following line to the fragment function
 
@@ -370,7 +411,7 @@ fragment GBufferOut gBufferFrag(VertexOut in [[stage_in]],
 Now, change the blit copy command to copy from the normal texture, rather than
 the albedo texture. This will display the normal texture to the screen:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func render(_ view: MTKView) {
     // ...
@@ -379,13 +420,13 @@ the albedo texture. This will display the normal texture to the screen:
   }
 #+END_SRC
 
-[[file:../img/normal.png]]
+[[file:../img/posts/implementing-deferred-shading-in-metal/normal.png]]
 
 You might notice some artifacts, this has to do with the fact that we're
 blitting a 16-bit float directly to an 8-bit drawable texture. You can replace
 ".rgba16Float" to ".rgba8Unorm" in your code to confirm this.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   let gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: false)
@@ -396,7 +437,7 @@ blitting a 16-bit float directly to an 8-bit drawable texture. You can replace
 
 To finish up the GBuffer pass, let's render the world position of our scene to texture.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   @objc
   class Renderer : NSObject, MTKViewDelegate
@@ -470,7 +511,7 @@ To finish up the GBuffer pass, let's render the world position of our scene to t
 
 Again, we'll have to make a few adjustments to our shader. Things get a little bit more complicated.
 
-#+NAME: Shaders.metal
+_Shaders.metal_
 #+BEGIN_SRC swift
       // ...
       #include <metal_stdlib>
@@ -538,7 +579,7 @@ Again, we'll have to make a few adjustments to our shader. Things get a little b
 
 Because we changed the Constants struct in the shader, we'll have to change it in 'Renderer.swift' too:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   import Metal
@@ -557,7 +598,7 @@ Because we changed the Constants struct in the shader, we'll have to change it i
 
 We also need to make sure that we update the model matrix for the cube.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func updateWithTimestep(_ timestep: TimeInterval)
   {
@@ -589,7 +630,7 @@ We also need to make sure that we update the model matrix for the cube.
 
 Finally, we can change our blit copy command to copy from the position texture and view the results. Again, you will notice some artifacts and again you can temporarily change the format of the texture to "rgba8Unorm" to avoid these artifacts.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func render(_ view: MTKView) {
     // ...
@@ -598,10 +639,11 @@ Finally, we can change our blit copy command to copy from the position texture a
   }
 #+END_SRC
 
-[[file:../img/position.png]]
+[[file:../img/posts/implementing-deferred-shading-in-metal/position.png]]
 
-Great! We've finished rendering the GBuffer data from our scene, now to prepare the stencil pass.
+Great! We've finished rendering the GBuffer data from our scene. Now onto the stencil pass.
 
+** Stencil pass
 *** Prepare the light volumes
 
 Before we can render any lights, we need to prepare the meshes that will
@@ -613,7 +655,7 @@ screen).
 The easiest way to do this is to modify the Mesh class that is included in the
 example:
 
-#+NAME: Mesh.swift
+_Mesh.swift_
 #+BEGIN_SRC swift
   // ...
   class Mesh {
@@ -661,7 +703,7 @@ example:
 
 Now we can create a light volume mesh in our renderer:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   let gBufferRenderPipeline: MTLRenderPipelineState
@@ -682,7 +724,8 @@ Now we can create a light volume mesh in our renderer:
 #+END_SRC
 
 And add a number of properties for our lights:
-#+NAME: Renderer.swift
+
+_Renderer.swift_
 #+BEGIN_SRC swift
     // ...
     struct Constants {
@@ -710,7 +753,7 @@ And add a number of properties for our lights:
   init?(mtkView: MTKView) {
     // ...
     lightSphere = Mesh(sphereWithSize: 1.0, device: device)!
-        
+
     // Add space for each light's data
     for _ in 0...(lightNumber - 1) {
         lightProperties.append(PointLight())
@@ -733,9 +776,9 @@ And add a number of properties for our lights:
 #+END_SRC
 
 Before we do anything further, let's render these lights in the GBuffer pass so
-that we can ensure they're working as we'd expect. 
+that we can ensure they're working as we'd expect.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   func updateWithTimestep(_ timestep: TimeInterval)
@@ -800,19 +843,19 @@ that we can ensure they're working as we'd expect.
   }
 #+END_SRC
 
-INSERT LIGHT IMAGES
+[[file:../img/posts/implementing-deferred-shading-in-metal/lights-normal.png]]
 
 Looks alright to me! Note that I'm visualizing the normals in the above image.
 
 When you're happy with the light volumes, remove them from the above drawing
 code.
 
-*** Stencil Pass
+*** Make the stencil pass
 
 Let's start with the shaders:
 
-#+NAME: Shaders.metal
-#+BEGIN_SRC c++ 
+_Shaders.metal_
+#+BEGIN_SRC c++
 struct StencilPassOut {
     float4 position [[position]];
 };
@@ -821,9 +864,9 @@ vertex StencilPassOut stencilPassVert(const device VertexIn *vertices [[buffer(0
                                       const device Constants &uniforms [[buffer(1)]],
                                       unsigned int vid [[vertex_id]]) {
     StencilPassOut out;
-    
+
     out.position = uniforms.modelViewProjectionMatrix * float4(vertices[vid].position, 1.0);
-    
+
     return out;
 }
 
@@ -838,7 +881,7 @@ pass will only populate the stencil buffer.
 Instead of creating a new texture for our stencil buffer, let's piggyback on an
 existing one:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   init?(mtkView: MTKView) {
     // ...
@@ -858,7 +901,7 @@ existing one:
 
 Ok, next we'll need to configure the behaviour of the stencil pass:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   let stencilPassDepthStencilState: MTLDepthStencilState
@@ -938,9 +981,9 @@ Ok, next we'll need to configure the behaviour of the stencil pass:
   }
 #+END_SRC
 
-Finally we do the stencil pass:
+Finally, we do the stencil pass:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
     func render(_ view: MTKView) {
         // ...
@@ -1005,11 +1048,13 @@ Finally we do the stencil pass:
 Of course we won't see anything yet, we'll have to trust that the stencil buffer
 is filled for now.
 
-*** Lighting pass
+** Lighting pass
+
+*** A first pass
 
 Let's start off with some simplified shaders for our lighting pass:
 
-#+NAME: Shaders.metal
+_Shaders.metal_
 #+BEGIN_SRC swift
   // ...
   vertex StencilPassOut stencilPassVert(const device VertexIn *vertices [[buffer(0)]],
@@ -1056,7 +1101,7 @@ shader, we use the screen size to normalize the fragment position. The result of
 this calculation we use as the texture co-ordinates for our sampling of the
 various input textures from the GBuffer pass.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // Add light fragment input struct
   struct LightFragmentInput {
@@ -1093,7 +1138,7 @@ various input textures from the GBuffer pass.
 
 Now we can prepare the lighting pass:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   // ...
   let lightVolumeDepthStencilState: MTLDepthStencilState
@@ -1180,7 +1225,7 @@ There's alot going on there, so read through it carefully.
 
 Finally, let's perform the lighting pass:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func render(_ view: MTKView) {
     // ...
@@ -1213,7 +1258,7 @@ Finally, let's perform the lighting pass:
 
 We also need to blit the final composite texture to the screen.
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   func render(_ view: MTKView) {
     // ...
@@ -1224,7 +1269,7 @@ We also need to blit the final composite texture to the screen.
 
 You should see something like this:
 
-INSERT IMAGE
+[[file:../img/posts/implementing-deferred-shading-in-metal/lights-albedo.png]]
 
 You can see the lights blending nicely in the middle. Notice how the side of the
 cube facing away from the lights is still getting shaded? That might seem
@@ -1232,17 +1277,17 @@ erroneous but that case will be handled in our shaders, which won't shade
 triangles facing away from the light source.
 
 Obviously these are not the kind of shaders you'd normally use, they're only for
-demonstration purposes.
+visualization purposes.
 
 *** Improving those shaders
 
 We have all that information from the GBuffer available to us in our shaders,
 let's use it!
 
-At this point I decided to change the cube mesh to a sphere so I could better 
+At this point I decided to change the cube mesh to a sphere so I could better
 see the effect of the lights. I also tweaked the light positions:
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   init?(mtkView: MTKView) {
     // ...
@@ -1269,7 +1314,7 @@ see the effect of the lights. I also tweaked the light positions:
   }
 #+END_SRC
 
-INSERT_IMAGE
+[[file:../img/posts/implementing-deferred-shading-in-metal/lights-sphere.png]]
 
 Notice the wobbly edges of the light volume? It looks like that because of the
 low number of segments we're using in our sphere mesh. You can increase the
@@ -1282,7 +1327,7 @@ based on fall-off, but I think this article is big enough for now. A good
 explanation of how to calculate the radius of a light volume is given in
 [[http://ogldev.atspace.co.uk/www/tutorial36/tutorial36.html][this]] OGLDev tutorial.
 
-#+NAME: Shaders.metal
+_Shaders.metal_
 #+BEGIN_SRC swift
   // ...
   struct LightFragmentInput {
@@ -1329,11 +1374,11 @@ explanation of how to calculate the radius of a light volume is given in
     //result = (diffuse + specular);
 
     const float3 gammaCorrect = pow(float3(result), (1.0/2.2));
-    return float4(gammaCorrect, 1.0);    
+    return float4(gammaCorrect, 1.0);
   }
 #+END_SRC
 
-#+NAME: Renderer.swift
+_Renderer.swift_
 #+BEGIN_SRC swift
   struct PointLight {
       var worldPosition = float3(0.0, 0.0, 0.0)
@@ -1408,33 +1453,118 @@ explanation of how to calculate the radius of a light volume is given in
   }
 #+END_SRC
 
-INSERT IMAGE
+[[file:../img/posts/implementing-deferred-shading-in-metal/lights-colour-albedo.png]]
 
-*** A better clear colour
+And another with no texture, so that you can see the lights better:
 
-I don't really like black as a clear colour, it makes it more difficult to see
-when something isn't rendering properly. Grey is much better. Unfortunately
-setting a clear colour other than black isn't so simple with deferred rendering.
+[[file:../img/posts/implementing-deferred-shading-in-metal/lights-colour-flat.png]]
 
 *** An aside on gamma correction
-insert aside here ...
+Gamma correction, it's really important:
 
-** External links
-  - [[http://ogldev.atspace.co.uk/www/tutorial35/tutorial35.html][OGLDev]] 
-  - [[http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/][Marcin Ignac's
-    Blog - Gamma and Lighting]]
-** Process notes
+@@html: <style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/LKnqECcg6Gw' frameborder='0' allowfullscreen></iframe></div>@@
 
-- Record depth of scene using GBuffer pass
-- In stencil pass, render light volumes but don't perform any shading
-   calculations, we're only going to write to the stencil buffer.
-- Turn off backface culling to render both sides of the sphere ???
-- If a back face fragment fails the depth test (it's behind the scene geometry), increment the stencil buffer
-- If a front face fragment fails (it's behind the scene geometry)
-  - Note the this means if both sides of the light volume are in-front of the scene geometry, the stencil buffer is 0
-  - if both sides of the light volume are behind of the scene geometry, the stencil buffer isn't touched and hence is also 0
-  - if the front face is in-front of the light volume AND the back face is behind the light volume, the stencil buffer is 1, this is the case where the scene geometry is within the light volume
-- Without this stencil buffer technique, we would shade all fragments covered by the light volume in screen space.
-- With this information, we can further restrict which fragments we will perform expensive lighting calculations on and only shade fragments that fall within the light volume.
-- When we perform the lighting place, we'll impose a further condition on the passing of a fragment: it's stencil buffer value must not be 0.
+Further reading:
 
+- [[http://http.developer.nvidia.com/GPUGems3/gpugems3_ch24.html][GPU Gems 3: The Importance of Being Linear]]
+- [[http://www.codinglabs.net/article_gamma_vs_linear.aspx][Coding Labs: Gamma and Linear Spaces]]
+- [[http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php][Gamasutra: Gamma-Correct Lighting]]
+
+[[http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/][/Thanks Marcin Ignac/]]
+
+** Handling window resizing
+
+Up to now, we haven't been handling resize events, let's fix this:
+
+_Renderer.swift_
+#+BEGIN_SRC swift
+@objc
+class Renderer : NSObject, MTKViewDelegate
+{
+      // ...
+
+      func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+          // respond to resize
+          let drawableWidth = Int(size.width)
+          let drawableHeight = Int(size.height)
+
+          lightFragmentInput.screenSize.x = Float(size.width)
+          lightFragmentInput.screenSize.y = Float(size.height)
+
+          // Create resized GBuffer albedo texture
+          let gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferAlbedoTextureDescriptor.sampleCount = 1
+          gBufferAlbedoTextureDescriptor.storageMode = .private
+          gBufferAlbedoTextureDescriptor.textureType = .type2D
+          gBufferAlbedoTextureDescriptor.usage = [.renderTarget, .shaderRead]
+
+          gBufferAlbedoTexture = device.makeTexture(descriptor: gBufferAlbedoTextureDescriptor)
+
+          // Create resized GBuffer normal texture
+          let gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferNormalTextureDescriptor.sampleCount = 1
+          gBufferNormalTextureDescriptor.storageMode = .private
+          gBufferNormalTextureDescriptor.textureType = .type2D
+          gBufferNormalTextureDescriptor.usage = [.renderTarget, .shaderRead]
+
+          gBufferNormalTexture = device.makeTexture(descriptor: gBufferNormalTextureDescriptor)
+
+          // Create resized GBuffer position texture
+          let gBufferPositionTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferPositionTextureDescriptor.sampleCount = 1
+          gBufferPositionTextureDescriptor.storageMode = .private
+          gBufferPositionTextureDescriptor.textureType = .type2D
+          gBufferPositionTextureDescriptor.usage = [.renderTarget, .shaderRead]
+
+          gBufferPositionTexture = device.makeTexture(descriptor: gBufferPositionTextureDescriptor)
+
+          // Create resized GBuffer depth (and stencil) texture
+          let gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float_stencil8, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferDepthDesc.sampleCount = 1
+          gBufferDepthDesc.storageMode = .private
+          gBufferDepthDesc.textureType = .type2D
+          gBufferDepthDesc.usage = [.renderTarget, .shaderRead]
+
+          gBufferDepthTexture = device.makeTexture(descriptor: gBufferDepthDesc)
+
+          // Create resized composite texture
+          let compositeTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          compositeTextureDescriptor.sampleCount = 1
+          compositeTextureDescriptor.storageMode = .private
+          compositeTextureDescriptor.textureType = .type2D
+          compositeTextureDescriptor.usage = [.renderTarget]
+
+          compositeTexture = device.makeTexture(descriptor: compositeTextureDescriptor)
+
+          // Hook the new textures up to their descriptors
+          gBufferRenderPassDescriptor.colorAttachments[0].texture = gBufferAlbedoTexture
+          gBufferRenderPassDescriptor.colorAttachments[1].texture = gBufferNormalTexture
+          gBufferRenderPassDescriptor.colorAttachments[2].texture = gBufferPositionTexture
+          gBufferRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture
+
+          stencilRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture
+          stencilRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture
+
+          lightVolumeRenderPassDescriptor.colorAttachments[0].texture = compositeTexture
+          lightVolumeRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture
+      }
+
+      // ...
+  }
+#+END_SRC
+
+* Conclusion
+
+That demonstrates the core concepts of deferred shading. There's plenty more we
+could cover, but I'll save that for a future tutorial.
+
+* Related links
+  - [[http://ogldev.atspace.co.uk/www/tutorial35/tutorial35.html][OGLDev - Deferred Shading Part 1]]
+  - [[https://learnopengl.com/#!Advanced-Lighting/Deferred-Shading][Learn OpenGL - Deferred Shading]]
+  - [[http://www.codinglabs.net/tutorial_simple_def_rendering.aspx][Coding Labs - Deferred Rendering]]
+  - [[http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/][Marcin Ignac's Blog - Gamma and Lighting]]
+  - [[http://http.developer.nvidia.com/GPUGems3/gpugems3_ch24.html][GPU Gems 3: The Importance of Being Linear]]
+  - [[http://www.codinglabs.net/article_gamma_vs_linear.aspx][Coding Labs: Gamma and Linear Spaces]]
+  - [[http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php][Gamasutra: Gamma-Correct Lighting]]
+
+[[top][^ Back to Top]]    
