@@ -1,6 +1,6 @@
 #+SETUPFILE: ../org-templates/posts.org
 #+MACRO: POST_TITLE Getting Started with Low-Level Graphics Programming
-#+INCLUDE: ../org-templates/posts_header.org
+#+INCLUDE: ../org-templates/posts_short_header.org
 
 A few people have asked me how to get started with low-level graphics
 programming. Recently [[https://twitter.com/sehurlburt][Stephanie Hurlburt]] published a great post on just this

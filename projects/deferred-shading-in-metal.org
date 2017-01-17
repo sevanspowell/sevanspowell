@@ -1,7 +1,6 @@
 #+SETUPFILE: ../org-templates/projects.org
-#+INCLUDE: ../org-templates/projects_header.org
-
-* Deferred Shading in Metal
+#+MACRO: PROJECT_TITLE Deferred Shading in Metal
+#+INCLUDE: ../org-templates/projects_short_header.org
 
 [[file:../img/deferred.png]]
 

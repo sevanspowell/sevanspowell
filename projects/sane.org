@@ -1,7 +1,6 @@
 #+SETUPFILE: ../org-templates/projects.org
-#+INCLUDE: ../org-templates/projects_header.org
-
-* Sane 
+#+MACRO: PROJECT_TITLE Sane 
+#+INCLUDE: ../org-templates/projects_short_header.org
 
 /A simple POSIX shell implemented in C/
 

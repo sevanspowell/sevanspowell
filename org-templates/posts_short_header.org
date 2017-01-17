@@ -1,0 +1,4 @@
+<<top>>
+[[file:../index.org][< Home]]
+
+* {{{POST_TITLE}}} 

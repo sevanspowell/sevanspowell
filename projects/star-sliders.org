@@ -1,0 +1,25 @@
+#+SETUPFILE: ../org-templates/projects.org
+#+MACRO: PROJECT_TITLE Star Sliders 
+#+INCLUDE: ../org-templates/projects_short_header.org
+
+/Game in a legacy codebase/
+
+@@html: <style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/qs9F-rmZ_gQ' frameborder='0' allowfullscreen></iframe></div> @@
+
+Our task was to implement a game in a previous student's codebase. This 
+student's codebase was chosen by our teachers because it is particularly
+esoteric and difficult to work with.
+
+We created a little game similar to the 'surf' gamemode found in 
+Counter-Strike: Source ([[https://www.youtube.com/watch?v=gKAOkVA2yHQ][example]]).
+
+** Things learnt:
+
+How to...
+- work with legacy codebases.
+- achieve cross-platform development with CMake build system and cross-platform libraries (SDL2, OpenGL, GLEW).
+- implement and use an octree to accelerate collision detection.
+- develop a modern OpenGL rendering engine with camera system, mesh rendering, skybox, UI.
+
+** External links
+- [[https://bitbucket.org/samdelion/seaview][Bitbucket]]

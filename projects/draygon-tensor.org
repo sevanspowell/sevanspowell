@@ -1,15 +1,12 @@
 #+SETUPFILE: ../org-templates/projects.org
+#+MACRO: PROJECT_TITLE Draygon Tensor 
 #+INCLUDE: ../org-templates/projects_header.org
-
-* Draygon Tensor 
 
 /A game engine developed with three others as part of a university project./
 
-@@html:<iframe width="560" height="315"
-src="https://www.youtube.com/embed/wDD68iO0O_M" frameborder="0"
-allowfullscreen></iframe>@@
+@@html: <style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/wDD68iO0O_M' frameborder='0' allowfullscreen></iframe></div>@@
 
-*** Things Learnt:
+** Things learnt
 
 - How to apply forces to rigid bodies and calculate their resulting linear and angular motion.
 - Physics engine architecture.
@@ -115,3 +112,7 @@ I was also responsible for creating and testing the math library.
 
 - [[https://github.com/sevanspowell/DraygonTensor/tree/develop/src/math][Math Library]]
 - [[https://github.com/sevanspowell/DraygonTensor/tree/develop/test/src/math][Tests using GoogleTest library]]
+** External links
+- [[https://github.com/sevanspowell/DraygonTensor][GitHub]]
+
+[[top][^ Back to Top]]    
