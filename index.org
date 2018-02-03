@@ -11,6 +11,7 @@
   - [[file:projects/star-sliders.org][Star Sliders]]
   - [[file:projects/sane.org][A simple POSIX shell]]
 * Posts
-  - [[file:posts/learning-nasm-on-macos][Learning NASM on macOS]]
+  - [[file:posts/simple-raytracer.org][A Simple Raytracer]]
+  - [[file:posts/learning-nasm-on-macos.org][Learning NASM on macOS]]
   - [[file:posts/implementing-deferred-shading-in-metal.org][Implementing Deferred Shading in Metal]]
   - [[file:posts/getting-started-with-low-level-graphics-programming.org][Getting Started with Low-Level Graphics Programming]]

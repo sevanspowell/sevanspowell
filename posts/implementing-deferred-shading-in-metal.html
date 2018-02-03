@@ -1,0 +1,2001 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-02-04 Sun 10:40 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Samuel Evans-Powell</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="orgefbbc43"></a>
+<a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-org7c771d0" class="outline-2">
+<h2 id="org7c771d0">Implementing Deferred Shading in Metal</h2>
+<div class="outline-text-2" id="text-org7c771d0">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org7c771d0">Implementing Deferred Shading in Metal</a></li>
+<li><a href="#org818012c">Introduction</a></li>
+<li><a href="#orgd1ff1c3">Process</a></li>
+<li><a href="#orgf2bb12c">Implementation</a>
+<ul>
+<li><a href="#orgaf26203">GBuffer pass</a>
+<ul>
+<li><a href="#orgf14bc9f">Albedo and depth</a></li>
+<li><a href="#org316cb0d">Normal and position</a></li>
+</ul>
+</li>
+<li><a href="#orgb7223a0">Stencil pass</a>
+<ul>
+<li><a href="#orgd057733">Prepare the light volumes</a></li>
+<li><a href="#org19f8f2a">Make the stencil pass</a></li>
+</ul>
+</li>
+<li><a href="#orga28616b">Lighting pass</a>
+<ul>
+<li><a href="#orged19682">A first pass</a></li>
+<li><a href="#org97674b8">Improving those shaders</a></li>
+<li><a href="#org4f2f9f1">An aside on gamma correction</a></li>
+</ul>
+</li>
+<li><a href="#org0939233">Handling window resizing</a></li>
+</ul>
+</li>
+<li><a href="#org8a326ac">Conclusion</a></li>
+<li><a href="#org2f64a25">Related links</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org818012c" class="outline-2">
+<h2 id="org818012c">Introduction</h2>
+<div class="outline-text-2" id="text-org818012c">
+<p>
+Deferred shading is a rendering technique usually used to optimize scenes with
+a large number of light sources. Rather than perform expensive lighting
+calcuations on every fragment in the scene, we 'defer' the lighting
+calculations to a later time, when we know which fragments are affected by which
+lights.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgd1ff1c3" class="outline-2">
+<h2 id="orgd1ff1c3">Process</h2>
+<div class="outline-text-2" id="text-orgd1ff1c3">
+<p>
+The process of my particular implementation of deferred shading is as follows:
+</p>
+
+<p>
+We first render the scene in what is known as the 'Geometry Buffer' or 'GBuffer'
+pass, where we gather information about a scene (such as albedo, normal, depth
+and position information) and render it to separate textures.
+</p>
+
+<p>
+<i>The position, normal, world position and depth of a simple scene are shown below. Note that the normal and position textures look the same because the sphere is positioned at (0, 0, 0) and hence the position of each fragment is equivalent to that fragment's normal.</i>
+</p>
+
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/gbuffer-data.png" alt="gbuffer-data.png" />
+</p>
+</div>
+
+<p>
+Next, we render the light volumes in the scene. The light volumes are pieces of
+geometry chosen to mimic the area-of-effect of a particular light. For example,
+a point light can be represented by a sphere mesh. The radius of the sphere mesh
+should be such that the light contribution provided by that light at the edge of
+the mesh be 0.
+</p>
+
+<p>
+<i>A visualization of the lights in the example scene:</i>
+</p>
+
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-normal-fake.png" alt="lights-normal-fake.png" />
+</p>
+</div>
+
+<p>
+When we render the light volumes, we use the GBuffer pass's unmodified depth
+texture as as the render pass's depth texture, this allows us to compare the
+depth of the light volumes with the scene depth. We also render both the front
+and back faces of the light volume. If a front-face fails the depth test, we
+increment the stencil buffer value at that point. If a back-face fails the depth
+test, we decrement the stencil buffer value at that point. This way, fragments
+within a light volume have a value of 1 in the stencil buffer and all other
+fragments have a value of 0 (A visual explanation of this stencil buffer
+algorithm can be found <a href="http://ogldev.atspace.co.uk/www/tutorial37/tutorial37.html">here</a>).
+</p>
+
+<p>
+<i>Red represents pixels that are within the light volume:</i>
+</p>
+
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/stencil-buffer.png" alt="stencil-buffer.png" />
+</p>
+</div>
+
+<p>
+Finally, we combine all the information we've gathered so far and perform the
+lighting calculations. The depth test has already determined that these
+fragments are the fragments that can be seen by the camera and the stencil pass
+has allowed us to determine which fragments are actually within (and so affected
+by) the lights. As a result, the number of expensive lighting calculations we
+have to perform is minimized, helping us to improve our render performance.
+</p>
+
+<p>
+The final result looks something like this:
+</p>
+
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/final.png" alt="final.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf2bb12c" class="outline-2">
+<h2 id="orgf2bb12c">Implementation</h2>
+<div class="outline-text-2" id="text-orgf2bb12c">
+<p>
+The concept is actually quite simple, implementing it can be a little tricky,
+especially when using a framework you're not familiar with.
+</p>
+
+<p>
+<i>Disclaimer: There might be some bugs with this implementation that I haven't
+discovered yet.</i>
+</p>
+
+<p>
+Note that I've tried to code this explicitly as I can, I've avoided
+encapsulating some of these things into functions so that you can see what's
+going on more clearly. I also do a nominal amount of error-checking.
+</p>
+
+<p>
+To follow along with the rest of this tutorial, do the following:
+</p>
+<ul class="org-ul">
+<li>Download the <a href="https://developer.apple.com/library/content/samplecode/AdoptingMetalI/AdoptingMetalIApracticalapproachtoyourfirstMetalapp.zip">sample code</a> (I started with the sample code from <a href="https://developer.apple.com/library/content/samplecode/AdoptingMetalI/Introduction/Intro.html">Apple's Adopting Metal I</a> sample).</li>
+<li>Open the project in Xcode.</li>
+<li>Click on the "Metal Textured Mesh" project in the Project Navigator.</li>
+<li>Choose a development team under "General &gt; Signing".</li>
+<li>Run the project</li>
+</ul>
+
+<p>
+You should see a rotating cube with a checkerboard texture on a white
+background. You might also find it easier to follow along with the finished
+program in hand: <a href="https://github.com/sevanspowell/MetalDeferredLightingTutorial">MetalDeferredLightingTutorial</a>.
+</p>
+</div>
+
+<div id="outline-container-orgaf26203" class="outline-3">
+<h3 id="orgaf26203">GBuffer pass</h3>
+<div class="outline-text-3" id="text-orgaf26203">
+</div><div id="outline-container-orgf14bc9f" class="outline-4">
+<h4 id="orgf14bc9f">Albedo and depth</h4>
+<div class="outline-text-4" id="text-orgf14bc9f">
+<p>
+Let's setup our GBuffer pass. For now, we'll just render the scene albedo and depth.
+</p>
+
+<p>
+We'll need a few resources to start us off:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> time = TimeInterval<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> constants = Constants<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferAlbedoTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferDepthTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferRenderPassDescriptor: MTLRenderPassDescriptor&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>mtkView: MTKView<span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">To be used for the size of the render textures</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> drawableWidth = Int<span style="color: #568bbf;">(</span><span style="color: #bf568b;">self</span>.view.drawableSize.width<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> drawableHeight = Int<span style="color: #568bbf;">(</span><span style="color: #bf568b;">self</span>.view.drawableSize.height<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">We create our shaders from here</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> library = device.newDefaultLibrary<span style="color: #568bbf;">()</span>!&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer albedo texture</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">First we create a descriptor that describes the texture we're about to create</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferAlbedoTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+        gBufferAlbedoTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+        gBufferAlbedoTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+        gBufferAlbedoTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Then we make the texture</span>&#57344;&#57345;&#57345;
+        gBufferAlbedoTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferAlbedoTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer depth texture</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .depth32Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferDepthDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+        gBufferDepthDesc.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+        gBufferDepthDesc.textureType = .type2D&#57344;&#57345;&#57345;
+        gBufferDepthDesc.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        gBufferDepthTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferDepthDesc<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Build GBuffer depth/stencil state</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Again we create a descriptor that describes the object we're about to create</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferDepthStencilStateDescriptor: MTLDepthStencilDescriptor = MTLDepthStencilDescriptor<span style="color: #568bbf;">()</span>&#57344;&#57345;
+        gBufferDepthStencilStateDescriptor.isDepthWriteEnabled = <span style="color: #bfbf56;">true</span>&#57344;&#57345;&#57345;
+        gBufferDepthStencilStateDescriptor.depthCompareFunction = .lessEqual&#57344;&#57345;&#57345;
+        gBufferDepthStencilStateDescriptor.frontFaceStencil = <span style="color: #bfbf56;">nil</span>&#57344;&#57345;&#57345;
+        gBufferDepthStencilStateDescriptor.backFaceStencil = <span style="color: #bfbf56;">nil</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Then we create the depth/stencil state</span>&#57344;&#57345;&#57345;
+        gBufferDepthStencilState = device.makeDepthStencilState<span style="color: #568bbf;">(</span>descriptor: gBufferDepthStencilStateDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pass descriptor</span>&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the first color attachment (our albedo texture)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.clearColor = MTLClearColorMake<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.texture = gBufferAlbedoTexture&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the depth attachment</span>&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.depthAttachment.loadAction = .clear&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.depthAttachment.storeAction = .store&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+        gBufferRenderPassDescriptor.depthAttachment.clearDepth = <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pipeline</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferRenderPipelineDesc = MTLRenderPipelineDescriptor<span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.pixelFormat = .rgba8Unorm&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+        gBufferRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+        gBufferRenderPipelineDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.label = <span style="color: #56bf8b;">"GBuffer Render"</span>&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.vertexFunction = library.makeFunction<span style="color: #568bbf;">(</span>name: <span style="color: #56bf8b;">"gBufferVert"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferRenderPipelineDesc.fragmentFunction = library.makeFunction<span style="color: #568bbf;">(</span>name: <span style="color: #56bf8b;">"gBufferFrag"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        <span style="color: #bf568b;">do</span> <span style="color: #568bbf;">{</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">try</span> gBufferRenderPipeline = device.makeRenderPipelineState<span style="color: #56bf8b;">(</span>descriptor: gBufferRenderPipelineDesc<span style="color: #56bf8b;">)</span>&#57344;&#57345;
+        <span style="color: #568bbf;">}</span> <span style="color: #bf568b;">catch</span> <span style="color: #bf568b;">let</span> error <span style="color: #568bbf;">{</span>&#57344;&#57345;&#57345;
+            <span style="color: #568bbf;">fatalError</span><span style="color: #56bf8b;">(</span><span style="color: #56bf8b;">"Failed to create GBuffer pipeline state, error \(error)"</span><span style="color: #56bf8b;">)</span>&#57344;&#57345;
+        <span style="color: #568bbf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Now that all of our members are initialized, set ourselves as the drawing delegate of the view</span>&#57344;&#57345;
+        view.delegate = <span style="color: #bf568b;">self</span>&#57344;&#57345;&#57345;
+        view.device = device&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<p>
+You'll also want to add the following lines to your "Shaders.metal" file:
+</p>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-c++">&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8bbf56;">GBufferOut</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float4</span> <span style="color: #bf8b56;">albedo</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+vertex <span style="color: #8bbf56;">VertexOut</span> <span style="color: #8b56bf;">gBufferVert</span><span style="color: #bf568b;">(</span><span style="color: #bf568b;">const</span> <span style="color: #8bbf56;">device</span> <span style="color: #8bbf56;">VertexIn</span> *<span style="color: #bf8b56;">vertices</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                             <span style="color: #bf568b;">const</span> <span style="color: #8bbf56;">device</span> <span style="color: #8bbf56;">Constants</span> &amp;<span style="color: #bf8b56;">uniforms</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                             <span style="color: #8bbf56;">unsigned</span> <span style="color: #8bbf56;">int</span> <span style="color: #bf8b56;">vid</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>vertex_id<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">VertexOut</span> <span style="color: #bf8b56;">out</span>;&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">VertexIn</span> <span style="color: #bf8b56;">vin</span> = vertices<span style="color: #8b56bf;">[</span>vid<span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float4</span> <span style="color: #bf8b56;">inPosition</span> = float4<span style="color: #8b56bf;">(</span>vin.position, <span style="color: #bfbf56;">1.0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    out.position = uniforms.modelViewProjectionMatrix * inPosition;&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float3</span> <span style="color: #bf8b56;">normal</span> = vin.normal;&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float3</span> <span style="color: #bf8b56;">eyeNormal</span> = normalize<span style="color: #8b56bf;">(</span>uniforms.normalMatrix * normal<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    out.normal = eyeNormal;&#57344;&#57345;&#57345;
+    out.texCoords = vin.texCoords;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> out;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment <span style="color: #8bbf56;">GBufferOut</span> <span style="color: #8b56bf;">gBufferFrag</span><span style="color: #bf568b;">(</span><span style="color: #8bbf56;">VertexOut</span> <span style="color: #bf8b56;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_in<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                                <span style="color: #8bbf56;">texture2d</span><span style="color: #8b56bf;">&lt;</span><span style="color: #8bbf56;">float</span><span style="color: #8b56bf;">&gt;</span> <span style="color: #bf8b56;">albedo_texture</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Sample from checkerboard texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">constexpr</span> <span style="color: #8bbf56;">sampler</span> <span style="color: #8b56bf;">linear_sampler</span><span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">min_filter</span>::linear, <span style="color: #bfbf56;">mag_filter</span>::linear<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float4</span> <span style="color: #bf8b56;">albedo</span> = albedo_texture.sample<span style="color: #8b56bf;">(</span>linear_sampler, in.texCoords<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">GBufferOut</span> <span style="color: #bf8b56;">output</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Output to our GBuffer albedo texture</span>&#57344;&#57345;&#57345;
+    output.albedo = albedo;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> output;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+To actually do anything with all this, we'll need to almost completely replace
+our render function:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Our animation will be dependent on the frame time, so that regardless of how</span>&#57344;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">fast we're animating, the speed of the transformations will be roughly constant.</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> timestep = <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span> / TimeInterval<span style="color: #8b56bf;">(</span>view.preferredFramesPerSecond<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        updateWithTimestep<span style="color: #8b56bf;">(</span>timestep<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">A command buffer is a container for the  work we want to perform with the GPU.</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> commandBuffer = commandQueue.makeCommandBuffer<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">---- GBUFFER ---- //</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our scene to texture</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">We use an encoder to 'encode' commands into a command buffer</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: gBufferRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+        gBufferEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"GBuffer"</span><span style="color: #8b56bf;">)</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.label = <span style="color: #56bf8b;">"GBuffer"</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the depth stencil state we created earlier</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>gBufferDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setCullMode<span style="color: #8b56bf;">(</span>.back<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Set winding order</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the render pipeline state we created earlier</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>gBufferRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload vertex data</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>mesh.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload uniforms</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setVertexBytes<span style="color: #8b56bf;">(</span>&amp;constants, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Bind the checkerboard texture (for the cube)</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>texture, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our mesh</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.drawIndexedPrimitives<span style="color: #8b56bf;">(</span>type: mesh.primitiveType,&#57344;&#57345;&#57345;
+                                             indexCount: mesh.indexCount,&#57344;&#57345;&#57345;
+                                             indexType: mesh.indexType,&#57344;&#57345;&#57345;
+                                             indexBuffer: mesh.indexBuffer,&#57344;&#57345;&#57345;
+                                             indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.popDebugGroup<span style="color: #8b56bf;">()</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Finish encoding commands in this encoder</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">---- BLIT ---- //</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">A 'drawable' is essentially a render target that can be displayed on the screen</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> currDrawable = view.currentDrawable&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Blit our texture to the screen</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> blitEncoder = commandBuffer.makeBlitCommandEncoder<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+        blitEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"Blit"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create a region that covers the entire texture we want to blit to the screen</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> origin: MTLOrigin = MTLOriginMake<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> size: MTLSize = MTLSizeMake<span style="color: #8b56bf;">(</span>Int<span style="color: #568bbf;">(</span><span style="color: #bf568b;">self</span>.view.drawableSize.width<span style="color: #568bbf;">)</span>, Int<span style="color: #568bbf;">(</span><span style="color: #bf568b;">self</span>.view.drawableSize.height<span style="color: #568bbf;">)</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Encode copy command, copying from our albedo texture to the 'current drawable' texture</span>&#57344;&#57345;
+        blitEncoder.copy<span style="color: #8b56bf;">(</span>from: gBufferAlbedoTexture, sourceSlice: <span style="color: #bfbf56;">0</span>, sourceLevel: <span style="color: #bfbf56;">0</span>, sourceOrigin: origin, sourceSize: size, to: <span style="color: #568bbf;">(</span>currDrawable?.texture<span style="color: #568bbf;">)</span>!, destinationSlice: <span style="color: #bfbf56;">0</span>, destinationLevel: <span style="color: #bfbf56;">0</span>, destinationOrigin: origin<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        blitEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+        blitEncoder.popDebugGroup<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">if</span> <span style="color: #bf568b;">let</span> drawable = currDrawable&#57344;&#57345;&#57345;
+        <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+            <span style="color: #405c79;">// </span><span style="color: #627e99;">Display our drawable to the screen</span>&#57344;&#57345;&#57345;
+            commandBuffer.present<span style="color: #568bbf;">(</span>drawable<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+        <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Finish encoding commands</span>&#57344;&#57345;&#57345;
+        commandBuffer.commit<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+You should see the following image on screen:
+</p>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/albedo.png" alt="albedo.png" />
+</p>
+</div>
+
+<p>
+Great, that's step 1. Let's move on to rendering the normal and position data to
+a texture.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org316cb0d" class="outline-4">
+<h4 id="org316cb0d">Normal and position</h4>
+<div class="outline-text-4" id="text-org316cb0d">
+<p>
+First, the normal data. Add a normal texture to the renderer:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> time = TimeInterval<span style="color: #bf568b;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> constants = Constants<span style="color: #bf568b;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> gBufferAlbedoTexture: MTLTexture&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> gBufferDepthTexture: MTLTexture&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> gBufferDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> gBufferRenderPassDescriptor: MTLRenderPassDescriptor&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> gBufferRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> gBufferNormalTexture: MTLTexture&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer albedo texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">First we create a descriptor that describes the texture we're about to create</span>&#57344;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #8b56bf;">(</span>pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferAlbedoTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    gBufferAlbedoTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+    gBufferAlbedoTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+    gBufferAlbedoTextureDescriptor.usage = <span style="color: #8b56bf;">[</span>.renderTarget, .shaderRead<span style="color: #8b56bf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Then we make the texture</span>&#57344;&#57345;&#57345;
+    gBufferAlbedoTexture = device.makeTexture<span style="color: #8b56bf;">(</span>descriptor: gBufferAlbedoTextureDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer normal texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #8b56bf;">(</span>pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferNormalTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    gBufferNormalTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+    gBufferNormalTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+    gBufferNormalTextureDescriptor.usage = <span style="color: #8b56bf;">[</span>.renderTarget, .shaderRead<span style="color: #8b56bf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    gBufferNormalTexture = device.makeTexture<span style="color: #8b56bf;">(</span>descriptor: gBufferNormalTextureDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pass descriptor</span>&#57344;&#57345;&#57345;
+    gBufferRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the first color attachment (our albedo texture)</span>&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.clearColor = MTLClearColorMake<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.texture = gBufferAlbedoTexture&#57344;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the second color attachment (our normal texture)</span>&#57344;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.clearColor = MTLClearColorMake<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.texture = gBufferNormalTexture&#57344;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+    gBufferRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pipeline</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferRenderPipelineDesc = MTLRenderPipelineDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    gBufferRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.pixelFormat = .rgba8Unorm&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Add the following line to describe the pixel format of the normal texture</span>&#57345;
+    gBufferRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.pixelFormat = .rgba16Float&#57344;&#57345;&#57345;
+    gBufferRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    gBufferRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    gBufferRenderPipelineDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    gBufferRenderPipelineDesc.label = <span style="color: #56bf8b;">"GBuffer Render"</span>&#57344;&#57345;&#57345;
+    gBufferRenderPipelineDesc.vertexFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"gBufferVert"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferRenderPipelineDesc.fragmentFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"gBufferFrag"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    <span style="color: #bf568b;">do</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">try</span> gBufferRenderPipeline = device.makeRenderPipelineState<span style="color: #568bbf;">(</span>descriptor: gBufferRenderPipelineDesc<span style="color: #568bbf;">)</span>&#57344;&#57345;
+    <span style="color: #8b56bf;">}</span> <span style="color: #bf568b;">catch</span> <span style="color: #bf568b;">let</span> error <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #568bbf;">fatalError</span><span style="color: #568bbf;">(</span><span style="color: #56bf8b;">"Failed to create GBuffer pipeline state, error \(error)"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">GBufferOut</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+      float4 albedo <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+      float4 normal <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>; <span style="color: #405c79;">// </span><span style="color: #627e99;">Add normal texture output</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment GBufferOut gBufferFrag<span style="color: #bf568b;">(</span>VertexOut <span style="color: #bf568b;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_<span style="color: #bf568b;">in</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                                texture2d&lt;float&gt; albedo_texture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    constexpr sampler linear_sampler<span style="color: #8b56bf;">(</span><span style="color: #568bbf;">min</span>_filter::linear, mag_filter::linear<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    float4 albedo = albedo_texture.sample<span style="color: #8b56bf;">(</span>linear_sampler, <span style="color: #bf568b;">in</span>.texCoords<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    GBufferOut output;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    output.albedo = albedo;&#57344;&#57345;&#57345;
+    output.normal = float4<span style="color: #8b56bf;">(</span><span style="color: #bf568b;">in</span>.normal, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>; <span style="color: #405c79;">// </span><span style="color: #627e99;">Add the following line to the fragment function</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> output;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Now, change the blit copy command to copy from the normal texture, rather than
+the albedo texture. This will display the normal texture to the screen:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  blitEncoder.copy<span style="color: #8b56bf;">(</span>from: gBufferNormalTexture, sourceSlice: <span style="color: #bfbf56;">0</span>, sourceLevel: <span style="color: #bfbf56;">0</span>, sourceOrigin: origin, sourceSize: size, to: <span style="color: #568bbf;">(</span>currDrawable?.texture<span style="color: #568bbf;">)</span>!, destinationSlice: <span style="color: #bfbf56;">0</span>, destinationLevel: <span style="color: #bfbf56;">0</span>, destinationOrigin: origin<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/normal.png" alt="normal.png" />
+</p>
+</div>
+
+<p>
+You might notice some artifacts, this has to do with the fact that we're
+blitting a 16-bit float directly to an 8-bit drawable texture. You can replace
+".rgba16Float" to ".rgba8Unorm" in your code to confirm this.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #bf568b;">(</span>pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #bf568b;">)</span>&#57344;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+gBufferRenderPipelineDesc.colorAttachments<span style="color: #bf568b;">[</span><span style="color: #bfbf56;">1</span><span style="color: #bf568b;">]</span>.pixelFormat = .rgba8Unorm&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>
+</pre>
+</div>
+
+<p>
+To finish up the GBuffer pass, let's render the world position of our scene to texture.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferAlbedoTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferNormalTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Add position texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferPositionTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferDepthTexture: MTLTexture&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> gBufferRenderPassDescriptor: MTLRenderPassDescriptor&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>mtkView: MTKView<span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer normal texture</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferNormalTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+        gBufferNormalTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+        gBufferNormalTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+        gBufferNormalTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        gBufferNormalTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferNormalTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer position texture</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferPositionTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferPositionTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+        gBufferPositionTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+        gBufferPositionTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+        gBufferPositionTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        gBufferPositionTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferPositionTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pass descriptor</span>&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the first color attachment (our albedo texture)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.clearColor = MTLClearColorMake<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.texture = gBufferAlbedoTexture&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the second color attachment (our normal texture)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.clearColor = MTLClearColorMake<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.texture = gBufferNormalTexture&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Specify the properties of the third color attachment (our position texture)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.clearColor = MTLClearColorMake<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.texture = gBufferPositionTexture&#57344;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+        gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.storeAction = .store&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer render pipeline</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> gBufferRenderPipelineDesc = MTLRenderPipelineDescriptor<span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.pixelFormat = .rgba8Unorm&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.pixelFormat = .rgba16Float&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Add this line to describe the pixel format of the position texture</span>&#57344;&#57345;&#57345;
+        gBufferRenderPipelineDesc.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.pixelFormat = .rgba16Float&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Again, we'll have to make a few adjustments to our shader. Things get a little bit more complicated.
+</p>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift">    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    #include &lt;metal_stdlib&gt;&#57344;&#57345;&#57345;
+    using namespace metal;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">Constants</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+        float4x4 modelViewProjectionMatrix;&#57344;&#57345;&#57345;
+        float3x3 normalMatrix;&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Add space for a model matrix in our constants structs</span>&#57344;&#57345;&#57345;
+        float4x4 modelMatrix;&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">VertexOut</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+        float4 position <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>position<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+        float3 normal;&#57344;&#57345;&#57345;
+        float2 texCoords;&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Add world position to our vertex shader out struct</span>&#57344;&#57345;&#57345;
+        float4 worldPosition;&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">GBufferOut</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+        float4 albedo <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+        float4 normal <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Add another texture output to our GBuffer struct</span>&#57344;&#57345;&#57345;
+        float4 position <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>color<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">2</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+vertex VertexOut gBufferVert<span style="color: #bf568b;">(</span>const device VertexIn *vertices <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                             const device Constants &amp;uniforms <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                             unsigned int vid <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>vertex_id<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    VertexOut out;&#57344;&#57345;&#57345;
+    VertexIn vin = vertices<span style="color: #8b56bf;">[</span>vid<span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    float4 inPosition = float4<span style="color: #8b56bf;">(</span>vin.position, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    out.position = uniforms.modelViewProjectionMatrix * inPosition;&#57344;&#57345;&#57345;
+    float3 normal = vin.normal;&#57344;&#57345;&#57345;
+    float3 eyeNormal = normalize<span style="color: #8b56bf;">(</span>uniforms.normalMatrix * normal<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    out.normal = eyeNormal;&#57344;&#57345;&#57345;
+    out.texCoords = vin.texCoords;&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Calculate the world position of this vertex</span>&#57344;&#57345;&#57345;
+    out.worldPosition = uniforms.modelMatrix * inPosition;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> out;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment GBufferOut gBufferFrag<span style="color: #bf568b;">(</span>VertexOut <span style="color: #bf568b;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_<span style="color: #bf568b;">in</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                                texture2d&lt;float&gt; albedo_texture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    constexpr sampler linear_sampler<span style="color: #8b56bf;">(</span><span style="color: #568bbf;">min</span>_filter::linear, mag_filter::linear<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    float4 albedo = albedo_texture.sample<span style="color: #8b56bf;">(</span>linear_sampler, <span style="color: #bf568b;">in</span>.texCoords<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    GBufferOut output;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    output.albedo = albedo;&#57344;&#57345;&#57345;
+    output.normal = float4<span style="color: #8b56bf;">(</span><span style="color: #bf568b;">in</span>.normal, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Output this fragment's world position</span>&#57344;&#57345;&#57345;
+    output.position = <span style="color: #bf568b;">in</span>.worldPosition;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> output;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+
+</pre>
+</div>
+
+<p>
+Because we changed the Constants struct in the shader, we'll have to change it in 'Renderer.swift' too:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">import</span> Metal&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">import</span> simd&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">import</span> MetalKit&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">Constants</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> modelViewProjectionMatrix = matrix_identity_float4x4&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> normalMatrix = matrix_identity_float3x3&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Add model matrix to Constants struct</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> modelMatrix = matrix_identity_float4x4&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>
+</pre>
+</div>
+
+<p>
+We also need to make sure that we update the model matrix for the cube.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">updateWithTimestep</span><span style="color: #bf568b;">(</span>_ timestep: TimeInterval<span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We keep track of time so we can animate the various transformations</span>&#57344;&#57345;&#57345;
+    time = time + timestep&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> modelToWorldMatrix = matrix4x4_rotation<span style="color: #8b56bf;">(</span>Float<span style="color: #568bbf;">(</span>time<span style="color: #568bbf;">)</span> * <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">5</span>, vector_float3<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">7</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">So that the figure doesn't get distorted when the window changes size or rotates,</span>&#57344;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">we factor the current aspect ration into our projection matrix. We also select</span>&#57344;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">sensible values for the vertical view angle and the distances to the near and far planes.</span>&#57344;&#57345;
+    <span style="color: #bf568b;">let</span> viewSize = <span style="color: #bf568b;">self</span>.view.bounds.size&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> aspectRatio = Float<span style="color: #8b56bf;">(</span>viewSize.width / viewSize.height<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> verticalViewAngle = radians_from_degrees<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">65</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> nearZ: Float = <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> farZ: Float = <span style="color: #bfbf56;">100</span>.<span style="color: #bfbf56;">0</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> projectionMatrix = matrix_perspective<span style="color: #8b56bf;">(</span>verticalViewAngle, aspectRatio, nearZ, farZ<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> viewMatrix = matrix_look_at<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">2</span>.<span style="color: #bfbf56;">5</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">The combined model-view-projection matrix moves our vertices from model space into clip space</span>&#57344;&#57345;
+    <span style="color: #bf568b;">let</span> mvMatrix = matrix_multiply<span style="color: #8b56bf;">(</span>viewMatrix, modelToWorldMatrix<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    constants.modelViewProjectionMatrix = matrix_multiply<span style="color: #8b56bf;">(</span>projectionMatrix, mvMatrix<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    constants.normalMatrix = matrix_inverse_transpose<span style="color: #8b56bf;">(</span>matrix_upper_<span style="color: #bf568b;">left</span>_3x3<span style="color: #568bbf;">(</span>mvMatrix<span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Make sure to update model matrix</span>&#57344;&#57345;&#57345;
+    constants.modelMatrix = modelToWorldMatrix&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Finally, we can change our blit copy command to copy from the position texture and view the results. Again, you will notice some artifacts and again you can temporarily change the format of the texture to "rgba8Unorm" to avoid these artifacts.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  blitEncoder.copy<span style="color: #8b56bf;">(</span>from: gBufferPositionTexture, sourceSlice: <span style="color: #bfbf56;">0</span>, sourceLevel: <span style="color: #bfbf56;">0</span>, sourceOrigin: origin, sourceSize: size, to: <span style="color: #568bbf;">(</span>currDrawable?.texture<span style="color: #568bbf;">)</span>!, destinationSlice: <span style="color: #bfbf56;">0</span>, destinationLevel: <span style="color: #bfbf56;">0</span>, destinationOrigin: origin<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/position.png" alt="position.png" />
+</p>
+</div>
+
+<p>
+Great! We've finished rendering the GBuffer data from our scene. Now onto the stencil pass.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb7223a0" class="outline-3">
+<h3 id="orgb7223a0">Stencil pass</h3>
+<div class="outline-text-3" id="text-orgb7223a0">
+</div><div id="outline-container-orgd057733" class="outline-4">
+<h4 id="orgd057733">Prepare the light volumes</h4>
+<div class="outline-text-4" id="text-orgd057733">
+<p>
+Before we can render any lights, we need to prepare the meshes that will
+represent the light volumes. For now we're only going to represent point lights
+using spheres. It's possible to represent other light types using different
+volumes (e.g. represent directional lights using a quad that covers the entire
+screen).
+</p>
+
+<p>
+The easiest way to do this is to modify the Mesh class that is included in the
+example:
+</p>
+
+<p>
+<span class="underline">Mesh.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Mesh</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> vertexBuffer: MTLBuffer&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> vertexDescriptor: MTLVertexDescriptor&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> primitiveType: MTLPrimitiveType&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> indexBuffer: MTLBuffer&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> indexCount: Int&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> indexType: MTLIndexType&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>cubeWithSize size: Float, device: MTLDevice<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Add a new init method for spheres</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>sphereWithSize size: Float, device: MTLDevice<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> allocator = MTKMeshBufferAllocator<span style="color: #568bbf;">(</span>device: device<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> mdlMesh = MDLMesh<span style="color: #568bbf;">(</span>sphereWithExtent: vector_float3<span style="color: #56bf8b;">(</span>size, size, size<span style="color: #56bf8b;">)</span>, segments: vector_uint2<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">30</span>, <span style="color: #bfbf56;">30</span><span style="color: #56bf8b;">)</span>, inwardNormals: <span style="color: #bfbf56;">false</span>, geometryType: .triangles, allocator: allocator<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">do</span> <span style="color: #568bbf;">{</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">let</span> mtkMesh = <span style="color: #bf568b;">try</span> MTKMesh<span style="color: #56bf8b;">(</span>mesh: mdlMesh, device: device<span style="color: #56bf8b;">)</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">let</span> mtkVertexBuffer = mtkMesh.vertexBuffers<span style="color: #56bf8b;">[</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">]</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">let</span> submesh = mtkMesh.submeshes<span style="color: #56bf8b;">[</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">]</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">let</span> mtkIndexBuffer = submesh.indexBuffer&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+            vertexBuffer = mtkVertexBuffer.buffer&#57344;&#57345;&#57345;
+            vertexBuffer.label = <span style="color: #56bf8b;">"Mesh Vertices"</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+            vertexDescriptor = MTKMetalVertexDescriptorFromModelIO<span style="color: #56bf8b;">(</span>mdlMesh.vertexDescriptor<span style="color: #56bf8b;">)</span>&#57344;&#57345;
+            primitiveType = submesh.primitiveType&#57344;&#57345;&#57345;
+            indexBuffer = mtkIndexBuffer.buffer&#57344;&#57345;&#57345;
+            indexBuffer.label = <span style="color: #56bf8b;">"Mesh Indices"</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+            indexCount = submesh.indexCount&#57344;&#57345;&#57345;
+            indexType = submesh.indexType&#57344;&#57345;&#57345;
+        <span style="color: #568bbf;">}</span> <span style="color: #bf568b;">catch</span> _ <span style="color: #568bbf;">{</span>&#57344;&#57345;&#57345;
+            <span style="color: #bf568b;">return</span> <span style="color: #bfbf56;">nil</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">Unable to create MTK mesh from MDL mesh</span>&#57344;&#57345;&#57345;
+        <span style="color: #568bbf;">}</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Now we can create a light volume mesh in our renderer:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> gBufferRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> lightSphere: Mesh&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Make a unit sphere, we'll scale each light volume by it's radius in the vertex shader</span>&#57344;&#57345;
+    lightSphere = Mesh<span style="color: #8b56bf;">(</span>sphereWithSize: <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>, device: device<span style="color: #8b56bf;">)</span>!&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Now that all of our members are initialized, set ourselves as the drawing delegate of the view</span>&#57344;&#57345;
+    view.delegate = <span style="color: #bf568b;">self</span>&#57344;&#57345;&#57345;
+    view.device = device&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+And add a number of properties for our lights:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift">  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">Constants</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> modelViewProjectionMatrix = matrix_identity_float4x4&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> normalMatrix = matrix_identity_float3x3&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> modelMatrix = matrix_identity_float4x4&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">PointLight</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> worldPosition = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> radius = Float<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">let</span> lightSphere: Mesh&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">let</span> lightNumber = <span style="color: #bfbf56;">2</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> lightConstants = <span style="color: #8b56bf;">[</span>Constants<span style="color: #8b56bf;">]()</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">var</span> lightProperties = <span style="color: #8b56bf;">[</span>PointLight<span style="color: #8b56bf;">]()</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  lightSphere = Mesh<span style="color: #8b56bf;">(</span>sphereWithSize: <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>, device: device<span style="color: #8b56bf;">)</span>!&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Add space for each light's data</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">for</span> _ <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber - <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      lightProperties.append<span style="color: #568bbf;">(</span>PointLight<span style="color: #56bf8b;">()</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+      lightConstants.append<span style="color: #568bbf;">(</span>Constants<span style="color: #56bf8b;">()</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Hard-code position and radius</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.worldPosition = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">4</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.radius = <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">7</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.worldPosition = float3<span style="color: #8b56bf;">(</span>-<span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">4</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.radius = <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">6</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Now that all of our members are initialized, set ourselves as the drawing delegate of the view</span>&#57344;&#57345;
+  view.delegate = <span style="color: #bf568b;">self</span>&#57344;&#57345;&#57345;
+  view.device = device&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Before we do anything further, let's render these lights in the GBuffer pass so
+that we can ensure they're working as we'd expect.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">updateWithTimestep</span><span style="color: #bf568b;">(</span>_ timestep: TimeInterval<span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Update light constants</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">for</span> i <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber-<span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">let</span> lightModelToWorldMatrix = matrix_multiply<span style="color: #568bbf;">(</span>matrix4x4_translation<span style="color: #56bf8b;">(</span>lightProperties<span style="color: #8bbf56;">[</span>i<span style="color: #8bbf56;">]</span>.worldPosition.x, lightProperties<span style="color: #8bbf56;">[</span>i<span style="color: #8bbf56;">]</span>.worldPosition.y, lightProperties<span style="color: #8bbf56;">[</span>i<span style="color: #8bbf56;">]</span>.worldPosition.z<span style="color: #56bf8b;">)</span>, matrix4x4_scale<span style="color: #56bf8b;">(</span>vector3<span style="color: #8bbf56;">(</span>lightProperties<span style="color: #bfbf56;">[</span>i<span style="color: #bfbf56;">]</span>.radius, lightProperties<span style="color: #bfbf56;">[</span>i<span style="color: #bfbf56;">]</span>.radius, lightProperties<span style="color: #bfbf56;">[</span>i<span style="color: #bfbf56;">]</span>.radius<span style="color: #8bbf56;">)</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        <span style="color: #bf568b;">let</span> lightMvMatrix = matrix_multiply<span style="color: #568bbf;">(</span>viewMatrix, lightModelToWorldMatrix<span style="color: #568bbf;">)</span>;&#57344;&#57345;
+        lightConstants<span style="color: #568bbf;">[</span>i<span style="color: #568bbf;">]</span>.modelViewProjectionMatrix = matrix_multiply<span style="color: #568bbf;">(</span>projectionMatrix, lightMvMatrix<span style="color: #568bbf;">)</span>&#57344;&#57345;
+        lightConstants<span style="color: #568bbf;">[</span>i<span style="color: #568bbf;">]</span>.normalMatrix = matrix_inverse_transpose<span style="color: #568bbf;">(</span>matrix_upper_<span style="color: #bf568b;">left</span>_3x3<span style="color: #56bf8b;">(</span>lightMvMatrix<span style="color: #56bf8b;">)</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        lightConstants<span style="color: #568bbf;">[</span>i<span style="color: #568bbf;">]</span>.modelMatrix = lightModelToWorldMatrix;&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">---- GBUFFER ---- //</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our scene to texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We use an encoder to 'encode' commands into a command buffer</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: gBufferRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"GBuffer"</span><span style="color: #8b56bf;">)</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.label = <span style="color: #56bf8b;">"GBuffer"</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the depth stencil state we created earlier</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>gBufferDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setCullMode<span style="color: #8b56bf;">(</span>.back<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Set winding order</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the render pipeline state we created earlier</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>gBufferRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload vertex data</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>mesh.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload uniforms</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setVertexBytes<span style="color: #8b56bf;">(</span>&amp;constants, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Bind the checkerboard texture (for the cube)</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>texture, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our mesh</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.drawIndexedPrimitives<span style="color: #8b56bf;">(</span>type: mesh.primitiveType,&#57344;&#57345;&#57345;
+                                         indexCount: mesh.indexCount,&#57344;&#57345;&#57345;
+                                         indexType: mesh.indexType,&#57344;&#57345;&#57345;
+                                         indexBuffer: mesh.indexBuffer,&#57344;&#57345;&#57345;
+                                         indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our light meshes</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload light vertex data</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>lightSphere.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">for</span> i <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber - <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload uniforms</span>&#57344;&#57345;&#57345;
+        gBufferEncoder.setVertexBytes<span style="color: #568bbf;">(</span>&amp;lightConstants<span style="color: #56bf8b;">[</span>i<span style="color: #56bf8b;">]</span>, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        gBufferEncoder.drawIndexedPrimitives<span style="color: #568bbf;">(</span>type: lightSphere.primitiveType,&#57344;&#57345;&#57345;
+                                              indexCount: lightSphere.indexCount,&#57344;&#57345;
+                                              indexType: lightSphere.indexType,&#57344;&#57345;&#57345;
+                                              indexBuffer: lightSphere.indexBuffer,&#57344;&#57345;
+                                              indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.popDebugGroup<span style="color: #8b56bf;">()</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Finish encoding commands in this encoder</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-normal.png" alt="lights-normal.png" />
+</p>
+</div>
+
+<p>
+Looks alright to me! Note that I'm visualizing the normals in the above image.
+</p>
+
+<p>
+When you're happy with the light volumes, remove them from the above drawing
+code.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org19f8f2a" class="outline-4">
+<h4 id="org19f8f2a">Make the stencil pass</h4>
+<div class="outline-text-4" id="text-org19f8f2a">
+<p>
+Let's start with the shaders:
+</p>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-c++"><span style="color: #bf568b;">struct</span> <span style="color: #8bbf56;">StencilPassOut</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">float4</span> <span style="color: #bf8b56;">position</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>position<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+vertex <span style="color: #8bbf56;">StencilPassOut</span> <span style="color: #8b56bf;">stencilPassVert</span><span style="color: #bf568b;">(</span><span style="color: #bf568b;">const</span> <span style="color: #8bbf56;">device</span> <span style="color: #8bbf56;">VertexIn</span> *<span style="color: #bf8b56;">vertices</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                      <span style="color: #bf568b;">const</span> <span style="color: #8bbf56;">device</span> <span style="color: #8bbf56;">Constants</span> &amp;<span style="color: #bf8b56;">uniforms</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                      <span style="color: #8bbf56;">unsigned</span> <span style="color: #8bbf56;">int</span> <span style="color: #bf8b56;">vid</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>vertex_id<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #8bbf56;">StencilPassOut</span> <span style="color: #bf8b56;">out</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    out.position = uniforms.modelViewProjectionMatrix * float4<span style="color: #8b56bf;">(</span>vertices<span style="color: #568bbf;">[</span>vid<span style="color: #568bbf;">]</span>.position, <span style="color: #bfbf56;">1.0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> out;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment <span style="color: #8bbf56;">void</span> <span style="color: #8b56bf;">stencilPassNullFrag</span><span style="color: #bf568b;">(</span><span style="color: #8bbf56;">StencilPassOut</span> <span style="color: #bf8b56;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_in<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Note that the fragment shader doesn't output anything, it has no need to. This
+pass will only populate the stencil buffer.
+</p>
+
+<p>
+Instead of creating a new texture for our stencil buffer, let's piggyback on an
+existing one:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Create GBuffer depth (and stencil) texture</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #8b56bf;">(</span>pixelFormat: .depth32Float_stencil8, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  gBufferDepthDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+  gBufferDepthDesc.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+  gBufferDepthDesc.textureType = .type2D&#57344;&#57345;&#57345;
+  gBufferDepthDesc.usage = <span style="color: #8b56bf;">[</span>.renderTarget, .shaderRead<span style="color: #8b56bf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  gBufferDepthTexture = device.makeTexture<span style="color: #8b56bf;">(</span>descriptor: gBufferDepthDesc<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Ok, next we'll need to configure the behaviour of the stencil pass:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> stencilPassDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> stencilRenderPassDescriptor: MTLRenderPassDescriptor&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> stencilRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">/* </span><span style="color: #627e99;">Be very careful with these operations, I clear the stencil buffer to a value of 0, so it's</span>&#57344;&#57345;
+<span style="color: #627e99;">     * very important that I set the depthFailureOperation to 'decrementWRAP' and 'incrementWRAP'</span>&#57344;&#57345;
+<span style="color: #627e99;">     * for the front and back face stencil operations (respectively) rather than 'decrementClamp'</span>&#57344;&#57345;
+<span style="color: #627e99;">     * and 'incrementClamp'. This is because we don't know in which order these operations will</span>&#57344;&#57345;
+<span style="color: #627e99;">     * occur. Let's say we use clamping:</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     *</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Back then front order - two failures, expected stencil buffer value: 0</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Stencil buffer starts at 0</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Back face depth test fails first: stencil buffer incremented to 1</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Front face depth test fails second: stencil buffer decremented to 0</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Stencil buffer final value = 0 (== expected value) - all good!</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     *</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Front then back order - two failures, expected stencil buffer value: 0</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Stencil buffer starts at 0</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Front face depth test fails first: stencil buffer decremented and clamped to 0</span>&#57344;&#57345;
+<span style="color: #627e99;">     * - Back face depth test fails second: stencil buffer incremented to 1</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * - Stencil buffer final value = 1 (!= expected value) - problem here!</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     *</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">     * Wrapping does not have this issue. There are of course other ways to avoid this problem.</span>&#57344;&#57345;
+<span style="color: #627e99;">     */</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Decrement when front faces depth fail</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> frontFaceStencilOp: MTLStencilDescriptor = MTLStencilDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    frontFaceStencilOp.stencilCompareFunction = .always        <span style="color: #405c79;">// </span><span style="color: #627e99;">Stencil test always succeeds, only concerned about depth test</span>&#57344;&#57345;
+    frontFaceStencilOp.stencilFailureOperation = .keep         <span style="color: #405c79;">// </span><span style="color: #627e99;">Stencil test always succeeds</span>&#57344;&#57345;
+    frontFaceStencilOp.depthStencilPassOperation = .keep       <span style="color: #405c79;">// </span><span style="color: #627e99;">Do nothing if depth test passes</span>&#57344;&#57345;
+    frontFaceStencilOp.depthFailureOperation = .decrementWrap <span style="color: #405c79;">// </span><span style="color: #627e99;">Decrement if depth test fails</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Increment when back faces depth fail</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> backFaceStencilOp: MTLStencilDescriptor = MTLStencilDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    backFaceStencilOp.stencilCompareFunction = .always        <span style="color: #405c79;">// </span><span style="color: #627e99;">Stencil test always succeeds, only concerned about depth test</span>&#57344;&#57345;
+    backFaceStencilOp.stencilFailureOperation = .keep         <span style="color: #405c79;">// </span><span style="color: #627e99;">Stencil test always succeeds</span>&#57344;&#57345;
+    backFaceStencilOp.depthStencilPassOperation = .keep       <span style="color: #405c79;">// </span><span style="color: #627e99;">Do nothing if depth test passes</span>&#57344;&#57345;
+    backFaceStencilOp.depthFailureOperation = .incrementWrap <span style="color: #405c79;">// </span><span style="color: #627e99;">Increment if depth test fails</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> stencilPassDepthStencilStateDesc: MTLDepthStencilDescriptor = MTLDepthStencilDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;
+    stencilPassDepthStencilStateDesc.isDepthWriteEnabled = <span style="color: #bfbf56;">false</span>           <span style="color: #405c79;">// </span><span style="color: #627e99;">Only concerned with modifying stencil buffer</span>&#57344;&#57345;
+    stencilPassDepthStencilStateDesc.depthCompareFunction = .lessEqual     <span style="color: #405c79;">// </span><span style="color: #627e99;">Only perform stencil op when depth function fails</span>&#57344;&#57345;
+    stencilPassDepthStencilStateDesc.frontFaceStencil = frontFaceStencilOp <span style="color: #405c79;">// </span><span style="color: #627e99;">For front-facing polygons</span>&#57344;&#57345;
+    stencilPassDepthStencilStateDesc.backFaceStencil = backFaceStencilOp   <span style="color: #405c79;">// </span><span style="color: #627e99;">For back-facing polygons</span>&#57344;&#57345;
+    stencilPassDepthStencilState = device.makeDepthStencilState<span style="color: #8b56bf;">(</span>descriptor: stencilPassDepthStencilStateDesc<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> stencilRenderPipelineDesc = MTLRenderPipelineDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    stencilRenderPipelineDesc.label = <span style="color: #56bf8b;">"Stencil Pipeline"</span>&#57344;&#57345;&#57345;
+    stencilRenderPipelineDesc.sampleCount = view.sampleCount&#57344;&#57345;&#57345;
+    stencilRenderPipelineDesc.vertexFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"stencilPassVert"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    stencilRenderPipelineDesc.fragmentFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"stencilPassNullFrag"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    stencilRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    stencilRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    <span style="color: #bf568b;">do</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">try</span> stencilRenderPipeline = device.makeRenderPipelineState<span style="color: #568bbf;">(</span>descriptor: stencilRenderPipelineDesc<span style="color: #568bbf;">)</span>&#57344;&#57345;
+    <span style="color: #8b56bf;">}</span> <span style="color: #bf568b;">catch</span> <span style="color: #bf568b;">let</span> error <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #568bbf;">fatalError</span><span style="color: #568bbf;">(</span><span style="color: #56bf8b;">"Failed to create Stencil pipeline state, error \(error)"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    stencilRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    stencilRenderPassDescriptor.depthAttachment.loadAction = .load      <span style="color: #405c79;">// </span><span style="color: #627e99;">Load up depth information from GBuffer pass</span>&#57344;&#57345;
+    stencilRenderPassDescriptor.depthAttachment.storeAction = .store    <span style="color: #405c79;">// </span><span style="color: #627e99;">We'll use depth information in later passes</span>&#57344;&#57345;
+    stencilRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture&#57344;&#57345;&#57345;
+    stencilRenderPassDescriptor.stencilAttachment.loadAction = .clear   <span style="color: #405c79;">// </span><span style="color: #627e99;">Contents of stencil buffer unkown at this point, clear it</span>&#57344;&#57345;
+    stencilRenderPassDescriptor.stencilAttachment.storeAction = .store  <span style="color: #405c79;">// </span><span style="color: #627e99;">Store the stencil buffer so that the next pass can use it</span>&#57344;&#57345;
+    stencilRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Now that all of our members are initialized, set ourselves as the drawing delegate of the view</span>&#57344;&#57345;
+    view.delegate = <span style="color: #bf568b;">self</span>&#57344;&#57345;&#57345;
+    view.device = device&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Finally, we do the stencil pass:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">---- GBUFFER ---- //</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our scene to texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We use an encoder to 'encode' commands into a command buffer</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> gBufferEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: gBufferRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    gBufferEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"GBuffer"</span><span style="color: #8b56bf;">)</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.label = <span style="color: #56bf8b;">"GBuffer"</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the depth stencil state we created earlier</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>gBufferDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setCullMode<span style="color: #8b56bf;">(</span>.back<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Set winding order</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Use the render pipeline state we created earlier</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>gBufferRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload vertex data</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>mesh.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload uniforms</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setVertexBytes<span style="color: #8b56bf;">(</span>&amp;constants, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Bind the checkerboard texture (for the cube)</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>texture, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Draw our mesh</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.drawIndexedPrimitives<span style="color: #8b56bf;">(</span>type: mesh.primitiveType,&#57344;&#57345;&#57345;
+                                          indexCount: mesh.indexCount,&#57344;&#57345;&#57345;
+                                          indexType: mesh.indexType,&#57344;&#57345;&#57345;
+                                          indexBuffer: mesh.indexBuffer,&#57344;&#57345;&#57345;
+                                          indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.popDebugGroup<span style="color: #8b56bf;">()</span> <span style="color: #405c79;">// </span><span style="color: #627e99;">For debugging</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Finish encoding commands in this encoder</span>&#57344;&#57345;&#57345;
+    gBufferEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">---- STENCIL ---- //</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> stencilPassEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: stencilRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    stencilPassEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"Stencil Pass"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.label = <span style="color: #56bf8b;">"Stencil Pass"</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>stencilPassDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We want to draw back-facing AND front-facing polygons</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.setCullMode<span style="color: #8b56bf;">(</span>.<span style="color: #bf568b;">none</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>stencilRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>lightSphere.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">for</span> i <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber-<span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        stencilPassEncoder.setVertexBytes<span style="color: #568bbf;">(</span>&amp;lightConstants<span style="color: #56bf8b;">[</span>i<span style="color: #56bf8b;">]</span>, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+        stencilPassEncoder.drawIndexedPrimitives<span style="color: #568bbf;">(</span>type: lightSphere.primitiveType, indexCount: lightSphere.indexCount, indexType: lightSphere.indexType, indexBuffer: lightSphere.indexBuffer, indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    stencilPassEncoder.popDebugGroup<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    stencilPassEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">---- BLIT ---- //</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Blit our texture to the screen</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> blitEncoder = commandBuffer.makeBlitCommandEncoder<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    blitEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"Blit"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+Of course we won't see anything yet, we'll have to trust that the stencil buffer
+is filled for now.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga28616b" class="outline-3">
+<h3 id="orga28616b">Lighting pass</h3>
+<div class="outline-text-3" id="text-orga28616b">
+</div><div id="outline-container-orged19682" class="outline-4">
+<h4 id="orged19682">A first pass</h4>
+<div class="outline-text-4" id="text-orged19682">
+<p>
+Let's start off with some simplified shaders for our lighting pass:
+</p>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+vertex StencilPassOut stencilPassVert<span style="color: #bf568b;">(</span>const device VertexIn *vertices <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                      const device Constants &amp;uniforms <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                      unsigned int vid <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>vertex_id<span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    StencilPassOut out;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    out.position = uniforms.modelViewProjectionMatrix * float4<span style="color: #8b56bf;">(</span>vertices<span style="color: #568bbf;">[</span>vid<span style="color: #568bbf;">]</span>.position, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> out;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment void stencilPassNullFrag<span style="color: #bf568b;">(</span>StencilPassOut <span style="color: #bf568b;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_<span style="color: #bf568b;">in</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">Used to calculate texture sampling co-ordinates</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">LightFragmentInput</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    float2 screenSize;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment float4 lightVolumeFrag<span style="color: #bf568b;">(</span>StencilPassOut <span style="color: #bf568b;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_<span style="color: #bf568b;">in</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                                constant LightFragmentInput *lightData <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                texture2d&lt;float&gt; albedoTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57345;
+                                texture2d&lt;float&gt; normalsTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                texture2d&lt;float&gt; positionTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">2</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We sample albedo, normals and position from the position of this fragment, normalized to be 0-1 within screen space</span>&#57344;&#57345;
+    float2 sampleCoords = <span style="color: #bf568b;">in</span>.position.xy / lightData-&gt;screenSize;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    constexpr sampler texSampler;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Multiply by 0.5 so we can see the lights blending</span>&#57344;&#57345;&#57345;
+    float3 albedo = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">5</span><span style="color: #8b56bf;">)</span> * float3<span style="color: #8b56bf;">(</span>albedoTexture.sample<span style="color: #568bbf;">(</span>texSampler, sampleCoords<span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Gamma correct the texture</span>&#57344;&#57345;&#57345;
+    float3 gammaCorrect = pow<span style="color: #8b56bf;">(</span>albedo, <span style="color: #568bbf;">(</span><span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>/<span style="color: #bfbf56;">2</span>.<span style="color: #bfbf56;">2</span><span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">return</span> float4<span style="color: #8b56bf;">(</span>gammaCorrect, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+We can actually re-use the vertex shader from our stencil pass. In the fragment
+shader, we use the screen size to normalize the fragment position. The result of
+this calculation we use as the texture co-ordinates for our sampling of the
+various input textures from the GBuffer pass.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">Add light fragment input struct</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">LightFragmentInput</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> screenSize = float2<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> lightSphere: Mesh&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> lightNumber = <span style="color: #bfbf56;">2</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">var</span> lightConstants = <span style="color: #8b56bf;">[</span>Constants<span style="color: #8b56bf;">]()</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">var</span> lightProperties = <span style="color: #8b56bf;">[</span>PointLight<span style="color: #8b56bf;">]()</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Add light fragment input property</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">var</span> lightFragmentInput = LightFragmentInput<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> stencilPassDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> stencilRenderPassDescriptor: MTLRenderPassDescriptor&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> stencilRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>mtkView: MTKView<span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      lightFragmentInput.screenSize.x = Float<span style="color: #568bbf;">(</span>view.drawableSize.width<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+      lightFragmentInput.screenSize.y = Float<span style="color: #568bbf;">(</span>view.drawableSize.height<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #568bbf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">Now that all of our members are initialized, set ourselves as the drawing delegate of the view</span>&#57344;&#57345;
+      view.delegate = <span style="color: #bf568b;">self</span>&#57344;&#57345;&#57345;
+      view.device = device&#57344;&#57345;&#57345;
+    <span style="color: #8b56bf;">}</span>
+</pre>
+</div>
+
+<p>
+Now we can prepare the lighting pass:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">let</span> lightVolumeDepthStencilState: MTLDepthStencilState&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> lightVolumeRenderPassDescriptor: MTLRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #bf568b;">()</span>&#57344;&#57345;
+<span style="color: #bf568b;">let</span> lightVolumeRenderPipeline: MTLRenderPipelineState&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">The final texture we'll blit to the screen</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">var</span> compositeTexture: MTLTexture&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+    lightFragmentInput.screenSize.x = Float<span style="color: #8b56bf;">(</span>view.drawableSize.width<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    lightFragmentInput.screenSize.y = Float<span style="color: #8b56bf;">(</span>view.drawableSize.height<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Create composite texture</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> compositeTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #8b56bf;">(</span>pixelFormat: .bgra8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    compositeTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    compositeTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+    compositeTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+    compositeTextureDescriptor.usage = <span style="color: #8b56bf;">[</span>.renderTarget<span style="color: #8b56bf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    compositeTexture = device.makeTexture<span style="color: #8b56bf;">(</span>descriptor: compositeTextureDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Build light volume depth-stencil state</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> lightVolumeStencilOp: MTLStencilDescriptor = MTLStencilDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    lightVolumeStencilOp.stencilCompareFunction = .notEqual           <span style="color: #405c79;">// </span><span style="color: #627e99;">Only pass if not equal to reference value (ref. value is 0 by default)</span>&#57344;&#57345;
+    lightVolumeStencilOp.stencilFailureOperation = .keep              <span style="color: #405c79;">// </span><span style="color: #627e99;">Don't modify stencil value at all</span>&#57344;&#57345;
+    lightVolumeStencilOp.depthStencilPassOperation = .keep&#57344;&#57345;&#57345;
+    lightVolumeStencilOp.depthFailureOperation = .keep                <span style="color: #405c79;">// </span><span style="color: #627e99;">Depth test is set to always succeed</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> lightVolumeDepthStencilStateDesc: MTLDepthStencilDescriptor = MTLDepthStencilDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;
+    lightVolumeDepthStencilStateDesc.isDepthWriteEnabled = <span style="color: #bfbf56;">false</span>       <span style="color: #405c79;">// </span><span style="color: #627e99;">Don't modify depth buffer</span>&#57344;&#57345;
+    lightVolumeDepthStencilStateDesc.depthCompareFunction = .always <span style="color: #405c79;">// </span><span style="color: #627e99;">Stencil buffer will be used to determine if we should light this fragment, ignore depth value (always pass)</span>&#57344;&#57345;
+    lightVolumeDepthStencilStateDesc.backFaceStencil = lightVolumeStencilOp&#57344;&#57345;&#57345;
+    lightVolumeDepthStencilStateDesc.frontFaceStencil = lightVolumeStencilOp&#57344;&#57345;&#57345;
+    lightVolumeDepthStencilState = device.makeDepthStencilState<span style="color: #8b56bf;">(</span>descriptor: lightVolumeDepthStencilStateDesc<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Build light volume render pass descriptor</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Get current render pass descriptor instead</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPassDescriptor = MTLRenderPassDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.clearColor = MTLClearColorMake<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    lightVolumeRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.texture = compositeTexture&#57344;&#57345;
+    lightVolumeRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.loadAction = .clear&#57344;&#57345;&#57345;
+    lightVolumeRenderPassDescriptor.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.storeAction = .store <span style="color: #405c79;">// </span><span style="color: #627e99;">Store for blitting</span>&#57344;&#57345;
+    lightVolumeRenderPassDescriptor.depthAttachment.clearDepth = <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Aren't using depth</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">/*</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">    lightVolumeRenderPassDescriptor.depthAttachment.loadAction = .load</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">    lightVolumeRenderPassDescriptor.depthAttachment.storeAction = .store</span>&#57344;&#57345;&#57345;
+<span style="color: #627e99;">    lightVolumeRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture</span>&#57344;&#57345;
+<span style="color: #627e99;">    */</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPassDescriptor.stencilAttachment.loadAction = .load&#57344;&#57345;&#57345;
+    lightVolumeRenderPassDescriptor.stencilAttachment.storeAction = .dontCare <span style="color: #405c79;">// </span><span style="color: #627e99;">Aren't using stencil buffer after this point</span>&#57344;&#57345;
+    lightVolumeRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Build light volume render pipeline</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">let</span> lightVolumeRenderPipelineDesc = MTLRenderPipelineDescriptor<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.pixelFormat = .bgra8Unorm&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We need to enable blending as each light volume is additive (it 'adds' to the contribution of the previous one)</span>&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.isBlendingEnabled = <span style="color: #bfbf56;">true</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.rgbBlendOperation = .add&#57344;&#57345;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.sourceRGBBlendFactor = .one&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.destinationRGBBlendFactor = .one&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.alphaBlendOperation = .add&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.sourceAlphaBlendFactor = .one&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.colorAttachments<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.destinationAlphaBlendFactor = .one&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPipelineDesc.label = <span style="color: #56bf8b;">"Light Volume Render"</span>&#57344;&#57345;&#57345;
+    lightVolumeRenderPipelineDesc.vertexFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"stencilPassVert"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    lightVolumeRenderPipelineDesc.fragmentFunction = library.makeFunction<span style="color: #8b56bf;">(</span>name: <span style="color: #56bf8b;">"lightVolumeFrag"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+    <span style="color: #bf568b;">do</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #bf568b;">try</span> lightVolumeRenderPipeline = device.makeRenderPipelineState<span style="color: #568bbf;">(</span>descriptor: lightVolumeRenderPipelineDesc<span style="color: #568bbf;">)</span>&#57344;&#57345;
+    <span style="color: #8b56bf;">}</span> <span style="color: #bf568b;">catch</span> <span style="color: #bf568b;">let</span> error <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+        <span style="color: #568bbf;">fatalError</span><span style="color: #568bbf;">(</span><span style="color: #56bf8b;">"Failed to create lightVolume pipeline state, error \(error)"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+    <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">super</span>.<span style="color: #bf568b;">init</span><span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+There's alot going on there, so read through it carefully.
+</p>
+
+<p>
+Finally, let's perform the lighting pass:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  stencilPassEncoder.popDebugGroup<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+  stencilPassEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">---- LIGHTING ---- //</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> lightEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: lightVolumeRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  lightEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"Light Volume Pass"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.label = <span style="color: #56bf8b;">"Light Volume Pass"</span>&#57344;&#57345;&#57345;
+  lightEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>lightVolumeDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setStencilReferenceValue<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setCullMode<span style="color: #8b56bf;">(</span>.front<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>lightVolumeRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferAlbedoTexture, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferNormalTexture, at: <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferPositionTexture, at: <span style="color: #bfbf56;">2</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>lightSphere.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightEncoder.setFragmentBytes<span style="color: #8b56bf;">(</span>&amp;lightFragmentInput, length: MemoryLayout&lt;LightFragmentInput&gt;.size, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  <span style="color: #bf568b;">for</span> i <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber - <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      lightEncoder.setVertexBytes<span style="color: #568bbf;">(</span>&amp;lightConstants<span style="color: #56bf8b;">[</span>i<span style="color: #56bf8b;">]</span>, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+      lightEncoder.drawIndexedPrimitives<span style="color: #568bbf;">(</span>type: lightSphere.primitiveType, indexCount: lightSphere.indexCount, indexType: lightSphere.indexType, indexBuffer: lightSphere.indexBuffer, indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  lightEncoder.popDebugGroup<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+  lightEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+We also need to blit the final composite texture to the screen.
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  blitEncoder.copy<span style="color: #8b56bf;">(</span>from: compositeTexture, sourceSlice: <span style="color: #bfbf56;">0</span>, sourceLevel: <span style="color: #bfbf56;">0</span>, sourceOrigin: origin, sourceSize: size, to: <span style="color: #568bbf;">(</span>currDrawable?.texture<span style="color: #568bbf;">)</span>!, destinationSlice: <span style="color: #bfbf56;">0</span>, destinationLevel: <span style="color: #bfbf56;">0</span>, destinationOrigin: origin<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+You should see something like this:
+</p>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-albedo.png" alt="lights-albedo.png" />
+</p>
+</div>
+
+<p>
+You can see the lights blending nicely in the middle. Notice how the side of the
+cube facing away from the lights is still getting shaded? That might seem
+erroneous but that case will be handled in our shaders, which won't shade
+triangles facing away from the light source.
+</p>
+
+<p>
+Obviously these are not the kind of shaders you'd normally use, they're only for
+visualization purposes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org97674b8" class="outline-4">
+<h4 id="org97674b8">Improving those shaders</h4>
+<div class="outline-text-4" id="text-org97674b8">
+<p>
+We have all that information from the GBuffer available to us in our shaders,
+let's use it!
+</p>
+
+<p>
+At this point I decided to change the cube mesh to a sphere so I could better
+see the effect of the lights. I also tweaked the light positions:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">init</span>?<span style="color: #bf568b;">(</span>mtkView: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Compile the functions and other state into a pipeline object.</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">do</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      renderPipelineState = <span style="color: #bf568b;">try</span> Renderer.buildRenderPipelineWithDevice<span style="color: #568bbf;">(</span>device, view: mtkView<span style="color: #568bbf;">)</span>&#57344;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">catch</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #568bbf;">print</span><span style="color: #568bbf;">(</span><span style="color: #56bf8b;">"Unable to compile render pipeline state"</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">return</span> <span style="color: #bfbf56;">nil</span>&#57344;&#57345;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  mesh = Mesh<span style="color: #8b56bf;">(</span>cubeWithSize: <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>, device: device<span style="color: #8b56bf;">)</span>!&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Hard-code position and radius</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.worldPosition = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">5</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">]</span>.radius = <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.worldPosition = float3<span style="color: #8b56bf;">(</span>-<span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">4</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightProperties<span style="color: #8b56bf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">]</span>.radius = <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-sphere.png" alt="lights-sphere.png" />
+</p>
+</div>
+
+<p>
+Notice the wobbly edges of the light volume? It looks like that because of the
+low number of segments we're using in our sphere mesh. You can increase the
+number of segments in your 'Mesh.swift' file, but they won't be noticable when
+we do the lighting calculations (lighting contributions at the edge of the light
+volume should approach 0).
+</p>
+
+<p>
+I am hard-coding the radii here. You can calculate the radius of the sphere
+based on fall-off, but I think this article is big enough for now. A good
+explanation of how to calculate the radius of a light volume is given in
+<a href="http://ogldev.atspace.co.uk/www/tutorial36/tutorial36.html">this</a> OGLDev tutorial.
+</p>
+
+<p>
+<span class="underline">Shaders.metal</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">LightFragmentInput</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    float2 screenSize;&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">We're going to need the camera's position to calculate specular lighting</span>&#57344;&#57345;&#57345;
+    float3 camWorldPos;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">PointLight</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    float3 worldPosition;&#57344;&#57345;&#57345;
+    float radius;&#57344;&#57345;&#57345;
+    float3 color;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+fragment float4 lightVolumeFrag<span style="color: #bf568b;">(</span>StencilPassOut <span style="color: #bf568b;">in</span> <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span>stage_<span style="color: #bf568b;">in</span><span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;&#57345;
+                                constant LightFragmentInput *lightData <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                constant PointLight *pointLight <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> buffer<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57345;
+                                texture2d&lt;float&gt; albedoTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">0</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57345;
+                                texture2d&lt;float&gt; normalsTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">1</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span>,&#57344;&#57345;
+                                texture2d&lt;float&gt; positionTexture <span style="color: #8b56bf;">[</span><span style="color: #568bbf;">[</span> texture<span style="color: #56bf8b;">(</span><span style="color: #bfbf56;">2</span><span style="color: #56bf8b;">)</span> <span style="color: #568bbf;">]</span><span style="color: #8b56bf;">]</span><span style="color: #bf568b;">)</span>&#57344;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">We sample albedo, normals and position from the position of this fragment, normalized to be 0-1 within screen space</span>&#57344;&#57345;
+  float2 sampleCoords = <span style="color: #bf568b;">in</span>.position.xy / lightData-&gt;screenSize;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  constexpr sampler texSampler;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Extract data for this fragment from GBuffer textures</span>&#57344;&#57345;&#57345;
+  const float3 albedo = float3<span style="color: #8b56bf;">(</span>albedoTexture.sample<span style="color: #568bbf;">(</span>texSampler, sampleCoords<span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+  const float3 worldPosition = float3<span style="color: #8b56bf;">(</span>positionTexture.sample<span style="color: #568bbf;">(</span>texSampler, sampleCoords<span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;
+  const float3 normal = normalize<span style="color: #8b56bf;">(</span>float3<span style="color: #568bbf;">(</span>normalsTexture.sample<span style="color: #56bf8b;">(</span>texSampler, sampleCoords<span style="color: #56bf8b;">)</span><span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;
+&#57344;&#57345;&#57345;
+  const float3 lightDir = normalize<span style="color: #8b56bf;">(</span>pointLight-&gt;worldPosition - worldPosition<span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Diffuse</span>&#57344;&#57345;&#57345;
+  const float nDotL = <span style="color: #568bbf;">max</span><span style="color: #8b56bf;">(</span>dot<span style="color: #568bbf;">(</span>normal, lightDir<span style="color: #568bbf;">)</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+  const float3 diffuse = nDotL * albedo * pointLight-&gt;color;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  float3 result = diffuse;&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Specular - if you want</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">//</span><span style="color: #627e99;">const float3 viewDir = normalize(lightData-&gt;camWorldPos - worldPosition);</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">//</span><span style="color: #627e99;">const float3 halfwayDir = normalize(lightDir + viewDir);</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">//</span><span style="color: #627e99;">const float3 specular = pow(max(dot(normal, halfwayDir), 0.0), 60.0) * 0.2;</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">//</span><span style="color: #627e99;">result = (diffuse + specular);</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  const float3 gammaCorrect = pow<span style="color: #8b56bf;">(</span>float3<span style="color: #568bbf;">(</span>result<span style="color: #568bbf;">)</span>, <span style="color: #568bbf;">(</span><span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span>/<span style="color: #bfbf56;">2</span>.<span style="color: #bfbf56;">2</span><span style="color: #568bbf;">)</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">return</span> float4<span style="color: #8b56bf;">(</span>gammaCorrect, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>;&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">PointLight</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> worldPosition = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> radius = Float<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> color = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">struct</span> <span style="color: #8b56bf;">LightFragmentInput</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> screenSize = float2<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">var</span> camWorldPos = float3<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span>.<span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">2</span>.<span style="color: #bfbf56;">5</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">init</span>?<span style="color: #8b56bf;">(</span>mtkView: MTKView<span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Add space for each light's data</span>&#57344;&#57345;&#57345;
+    <span style="color: #bf568b;">for</span> _ <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #568bbf;">(</span>lightNumber - <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span> <span style="color: #568bbf;">{</span>&#57344;&#57345;&#57345;
+        lightProperties.append<span style="color: #56bf8b;">(</span>PointLight<span style="color: #8bbf56;">()</span><span style="color: #56bf8b;">)</span>&#57344;&#57345;&#57345;
+        lightConstants.append<span style="color: #56bf8b;">(</span>Constants<span style="color: #8bbf56;">()</span><span style="color: #56bf8b;">)</span>&#57344;&#57345;&#57345;
+    <span style="color: #568bbf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    <span style="color: #405c79;">// </span><span style="color: #627e99;">Hard-code position, radius, color</span>&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.worldPosition = float3<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">5</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.radius = <span style="color: #bfbf56;">3</span>&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.color = float3<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.worldPosition = float3<span style="color: #568bbf;">(</span>-<span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">1</span>.<span style="color: #bfbf56;">5</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.radius = <span style="color: #bfbf56;">3</span>&#57344;&#57345;&#57345;
+    lightProperties<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.color = float3<span style="color: #568bbf;">(</span><span style="color: #bfbf56;">0</span>, <span style="color: #bfbf56;">1</span>, <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+<span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">render</span><span style="color: #bf568b;">(</span>_ view: MTKView<span style="color: #bf568b;">)</span> <span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">---- LIGHTING ---- //</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">let</span> lightPassEncoder = commandBuffer.makeRenderCommandEncoder<span style="color: #8b56bf;">(</span>descriptor: lightVolumeRenderPassDescriptor<span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  lightPassEncoder.pushDebugGroup<span style="color: #8b56bf;">(</span><span style="color: #56bf8b;">"Light Volume Pass"</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.label = <span style="color: #56bf8b;">"Light Volume Pass"</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Use our previously configured depth stencil state</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setDepthStencilState<span style="color: #8b56bf;">(</span>lightVolumeDepthStencilState<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Set our stencil reference value to 0 (in the depth stencil state we configured fragments to pass only if they are NOT EQUAL to the reference value</span>&#57344;&#57345;
+  lightPassEncoder.setStencilReferenceValue<span style="color: #8b56bf;">(</span><span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">We cull the front of the spherical light volume and not the back, in-case we are inside the light volume. I'm not 100% certain this is the best way to do this, but it seems to work.</span>&#57344;&#57345;
+  lightPassEncoder.setCullMode<span style="color: #8b56bf;">(</span>.front<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setFrontFacing<span style="color: #8b56bf;">(</span>.counterClockwise<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setRenderPipelineState<span style="color: #8b56bf;">(</span>lightVolumeRenderPipeline<span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Bind our GBuffer textures</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferAlbedoTexture, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferNormalTexture, at: <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setFragmentTexture<span style="color: #8b56bf;">(</span>gBufferPositionTexture, at: <span style="color: #bfbf56;">2</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setVertexBuffer<span style="color: #8b56bf;">(</span>lightSphere.vertexBuffer, offset:<span style="color: #bfbf56;">0</span>, at:<span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload our screen size</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.setFragmentBytes<span style="color: #8b56bf;">(</span>&amp;lightFragmentInput, length: MemoryLayout&lt;LightFragmentInput&gt;.size, at: <span style="color: #bfbf56;">0</span><span style="color: #8b56bf;">)</span>&#57344;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">Render light volumes</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">for</span> i <span style="color: #bf568b;">in</span> <span style="color: #bfbf56;">0</span>...<span style="color: #8b56bf;">(</span>lightNumber - <span style="color: #bfbf56;">1</span><span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+      lightPassEncoder.setVertexBytes<span style="color: #568bbf;">(</span>&amp;lightConstants<span style="color: #56bf8b;">[</span>i<span style="color: #56bf8b;">]</span>, length: MemoryLayout&lt;Constants&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">Upload light property data too</span>&#57344;&#57345;&#57345;
+      lightPassEncoder.setFragmentBytes<span style="color: #568bbf;">(</span>&amp;lightProperties<span style="color: #56bf8b;">[</span>i<span style="color: #56bf8b;">]</span>, length: MemoryLayout&lt;PointLight&gt;.size, at: <span style="color: #bfbf56;">1</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+      lightPassEncoder.drawIndexedPrimitives<span style="color: #568bbf;">(</span>type: lightSphere.primitiveType, indexCount: lightSphere.indexCount, indexType: lightSphere.indexType, indexBuffer: lightSphere.indexBuffer, indexBufferOffset: <span style="color: #bfbf56;">0</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+  <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  lightPassEncoder.popDebugGroup<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+  lightPassEncoder.endEncoding<span style="color: #8b56bf;">()</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">}</span>
+</pre>
+</div>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-colour-albedo.png" alt="lights-colour-albedo.png" />
+</p>
+</div>
+
+<p>
+And another with no texture, so that you can see the lights better:
+</p>
+
+
+<div class="figure">
+<p><img src="../img/posts/implementing-deferred-shading-in-metal/lights-colour-flat.png" alt="lights-colour-flat.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4f2f9f1" class="outline-4">
+<h4 id="org4f2f9f1">An aside on gamma correction</h4>
+<div class="outline-text-4" id="text-org4f2f9f1">
+<p>
+Gamma correction, it's really important:
+</p>
+
+<p>
+ <style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/LKnqECcg6Gw' frameborder='0' allowfullscreen></iframe></div>
+</p>
+
+<p>
+Further reading:
+</p>
+
+<ul class="org-ul">
+<li><a href="http://http.developer.nvidia.com/GPUGems3/gpugems3_ch24.html">GPU Gems 3: The Importance of Being Linear</a></li>
+<li><a href="http://www.codinglabs.net/article_gamma_vs_linear.aspx">Coding Labs: Gamma and Linear Spaces</a></li>
+<li><a href="http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php">Gamasutra: Gamma-Correct Lighting</a></li>
+</ul>
+
+<p>
+<a href="http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/"><i>Thanks Marcin Ignac</i></a>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0939233" class="outline-3">
+<h3 id="org0939233">Handling window resizing</h3>
+<div class="outline-text-3" id="text-org0939233">
+<p>
+Up to now, we haven't been handling resize events, let's fix this:
+</p>
+
+<p>
+<span class="underline">Renderer.swift</span>
+</p>
+<div class="org-src-container">
+<pre class="src src-swift"><span style="color: #bf568b;">@objc</span>&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">class</span> <span style="color: #8b56bf;">Renderer</span> : NSObject, MTKViewDelegate&#57344;&#57345;&#57345;
+<span style="color: #bf568b;">{</span>&#57344;&#57345;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      <span style="color: #bf568b;">func</span> <span style="color: #8b56bf;">mtkView</span><span style="color: #8b56bf;">(</span>_ view: MTKView, drawableSizeWillChange size: CGSize<span style="color: #8b56bf;">)</span> <span style="color: #8b56bf;">{</span>&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">respond to resize</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> drawableWidth = Int<span style="color: #568bbf;">(</span>size.width<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> drawableHeight = Int<span style="color: #568bbf;">(</span>size.height<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          lightFragmentInput.screenSize.x = Float<span style="color: #568bbf;">(</span>size.width<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+          lightFragmentInput.screenSize.y = Float<span style="color: #568bbf;">(</span>size.height<span style="color: #568bbf;">)</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Create resized GBuffer albedo texture</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+          gBufferAlbedoTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+          gBufferAlbedoTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+          gBufferAlbedoTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+          gBufferAlbedoTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          gBufferAlbedoTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferAlbedoTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Create resized GBuffer normal texture</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> gBufferNormalTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+          gBufferNormalTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+          gBufferNormalTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+          gBufferNormalTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+          gBufferNormalTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          gBufferNormalTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferNormalTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Create resized GBuffer position texture</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> gBufferPositionTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .rgba16Float, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+          gBufferPositionTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+          gBufferPositionTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+          gBufferPositionTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+          gBufferPositionTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          gBufferPositionTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferPositionTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Create resized GBuffer depth (and stencil) texture</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .depth32Float_stencil8, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+          gBufferDepthDesc.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+          gBufferDepthDesc.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+          gBufferDepthDesc.textureType = .type2D&#57344;&#57345;&#57345;
+          gBufferDepthDesc.usage = <span style="color: #568bbf;">[</span>.renderTarget, .shaderRead<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          gBufferDepthTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: gBufferDepthDesc<span style="color: #568bbf;">)</span>&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Create resized composite texture</span>&#57344;&#57345;&#57345;
+          <span style="color: #bf568b;">let</span> compositeTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor<span style="color: #568bbf;">(</span>pixelFormat: .bgra8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: <span style="color: #bfbf56;">false</span><span style="color: #568bbf;">)</span>&#57344;&#57345;
+          compositeTextureDescriptor.sampleCount = <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+          compositeTextureDescriptor.storageMode = .<span style="color: #bf568b;">private</span>&#57344;&#57345;&#57345;
+          compositeTextureDescriptor.textureType = .type2D&#57344;&#57345;&#57345;
+          compositeTextureDescriptor.usage = <span style="color: #568bbf;">[</span>.renderTarget<span style="color: #568bbf;">]</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+          compositeTexture = device.makeTexture<span style="color: #568bbf;">(</span>descriptor: compositeTextureDescriptor<span style="color: #568bbf;">)</span>&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          <span style="color: #405c79;">// </span><span style="color: #627e99;">Hook the new textures up to their descriptors</span>&#57344;&#57345;&#57345;
+          gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.texture = gBufferAlbedoTexture&#57344;&#57345;
+          gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">1</span><span style="color: #568bbf;">]</span>.texture = gBufferNormalTexture&#57344;&#57345;
+          gBufferRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">2</span><span style="color: #568bbf;">]</span>.texture = gBufferPositionTexture&#57344;&#57345;
+          gBufferRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          stencilRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+          stencilRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+&#57344;&#57345;&#57345;
+          lightVolumeRenderPassDescriptor.colorAttachments<span style="color: #568bbf;">[</span><span style="color: #bfbf56;">0</span><span style="color: #568bbf;">]</span>.texture = compositeTexture&#57344;&#57345;
+          lightVolumeRenderPassDescriptor.stencilAttachment.texture = gBufferDepthTexture&#57344;&#57345;
+      <span style="color: #8b56bf;">}</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+      <span style="color: #405c79;">// </span><span style="color: #627e99;">...</span>&#57344;&#57345;&#57345;
+  <span style="color: #bf568b;">}</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8a326ac" class="outline-2">
+<h2 id="org8a326ac">Conclusion</h2>
+<div class="outline-text-2" id="text-org8a326ac">
+<p>
+That demonstrates the core concepts of deferred shading. There's plenty more we
+could cover, but I'll save that for a future tutorial.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2f64a25" class="outline-2">
+<h2 id="org2f64a25">Related links</h2>
+<div class="outline-text-2" id="text-org2f64a25">
+<ul class="org-ul">
+<li><a href="http://ogldev.atspace.co.uk/www/tutorial35/tutorial35.html">OGLDev - Deferred Shading Part 1</a></li>
+<li><a href="https://learnopengl.com/#!Advanced-Lighting/Deferred-Shading">Learn OpenGL - Deferred Shading</a></li>
+<li><a href="http://www.codinglabs.net/tutorial_simple_def_rendering.aspx">Coding Labs - Deferred Rendering</a></li>
+<li><a href="http://marcinignac.com/blog/pragmatic-pbr-setup-and-gamma/">Marcin Ignac's Blog - Gamma and Lighting</a></li>
+<li><a href="http://http.developer.nvidia.com/GPUGems3/gpugems3_ch24.html">GPU Gems 3: The Importance of Being Linear</a></li>
+<li><a href="http://www.codinglabs.net/article_gamma_vs_linear.aspx">Coding Labs: Gamma and Linear Spaces</a></li>
+<li><a href="http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php">Gamasutra: Gamma-Correct Lighting</a></li>
+</ul>
+
+<p>
+<a href="#orgefbbc43">^ Back to Top</a>
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-02-04 Sun 10:40</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

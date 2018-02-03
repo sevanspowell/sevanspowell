@@ -85,13 +85,13 @@ bindings.
 ** Blender plugins
 
 *** Export script
-[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L487][__init__.py]]
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L487][init.py]]
 
 I developed a Blender script that takes an entire Blender scene and outputs it
 in a format our game engine expects.
 
 *** Affordance plugin
-[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L96][__init.py]]
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L96][init.py]]
 
 The affordance plugin allows us to specify the affordances of an object using
 the Blender UI.
@@ -99,7 +99,7 @@ the Blender UI.
 [[../img/affordancesClose.png]]
 
 *** Rigid body plugin
-[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L171][__init__.py]]
+[[https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L171][init.py]]
 
 The rigid body plugin allows a user to add collision shapes, mass and inertia
 tensor properties to an object using Blender's UI.

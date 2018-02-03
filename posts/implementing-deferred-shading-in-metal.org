@@ -2,6 +2,7 @@
 #+MACRO: POST_TITLE Implementing Deferred Shading in Metal
 #+INCLUDE: ../org-templates/posts_header.org
 
+
 * Introduction
 
 Deferred shading is a rendering technique usually used to optimize scenes with
@@ -15,7 +16,7 @@ lights.
 The process of my particular implementation of deferred shading is as follows:
 
 We first render the scene in what is known as the 'Geometry Buffer' or 'GBuffer'
-pass, where we gather information about a scene (such as albedo, normal, depth 
+pass, where we gather information about a scene (such as albedo, normal, depth
 and position information) and render it to separate textures.
 
 /The position, normal, world position and depth of a simple scene are shown below. Note that the normal and position textures look the same because the sphere is positioned at (0, 0, 0) and hence the position of each fragment is equivalent to that fragment's normal./
@@ -94,95 +95,95 @@ We'll need a few resources to start us off:
 
 _Renderer.swift_
 #+BEGIN_SRC swift
-    @objc
-    class Renderer : NSObject, MTKViewDelegate
-    {
-        // ...
-        var time = TimeInterval(0.0)
-        var constants = Constants()
+  @objc
+  class Renderer : NSObject, MTKViewDelegate
+  {
+      // ...
+      var time = TimeInterval(0.0)
+      var constants = Constants()
 
-        var gBufferAlbedoTexture: MTLTexture
-        var gBufferDepthTexture: MTLTexture
-        let gBufferDepthStencilState: MTLDepthStencilState
-        var gBufferRenderPassDescriptor: MTLRenderPassDescriptor
-        let gBufferRenderPipeline: MTLRenderPipelineState
+      var gBufferAlbedoTexture: MTLTexture
+      var gBufferDepthTexture: MTLTexture
+      let gBufferDepthStencilState: MTLDepthStencilState
+      var gBufferRenderPassDescriptor: MTLRenderPassDescriptor
+      let gBufferRenderPipeline: MTLRenderPipelineState
 
-        init?(mtkView: MTKView) {
-            // ...
-            // To be used for the size of the render textures
-            let drawableWidth = Int(self.view.drawableSize.width)
-            let drawableHeight = Int(self.view.drawableSize.height)
-            // We create our shaders from here
-            let library = device.newDefaultLibrary()!
+      init?(mtkView: MTKView) {
+          // ...
+          // To be used for the size of the render textures
+          let drawableWidth = Int(self.view.drawableSize.width)
+          let drawableHeight = Int(self.view.drawableSize.height)
+          // We create our shaders from here
+          let library = device.newDefaultLibrary()!
 
-            // Create GBuffer albedo texture
-            // First we create a descriptor that describes the texture we're about to create
-            let gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: false)
-            gBufferAlbedoTextureDescriptor.sampleCount = 1
-            gBufferAlbedoTextureDescriptor.storageMode = .private
-            gBufferAlbedoTextureDescriptor.textureType = .type2D
-            gBufferAlbedoTextureDescriptor.usage = [.renderTarget, .shaderRead]
+          // Create GBuffer albedo texture
+          // First we create a descriptor that describes the texture we're about to create
+          let gBufferAlbedoTextureDescriptor: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferAlbedoTextureDescriptor.sampleCount = 1
+          gBufferAlbedoTextureDescriptor.storageMode = .private
+          gBufferAlbedoTextureDescriptor.textureType = .type2D
+          gBufferAlbedoTextureDescriptor.usage = [.renderTarget, .shaderRead]
 
-            // Then we make the texture
-            gBufferAlbedoTexture = device.makeTexture(descriptor: gBufferAlbedoTextureDescriptor)
+          // Then we make the texture
+          gBufferAlbedoTexture = device.makeTexture(descriptor: gBufferAlbedoTextureDescriptor)
 
-            // Create GBuffer depth texture
-            let gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: drawableWidth, height: drawableHeight, mipmapped: false)
-            gBufferDepthDesc.sampleCount = 1
-            gBufferDepthDesc.storageMode = .private
-            gBufferDepthDesc.textureType = .type2D
-            gBufferDepthDesc.usage = [.renderTarget, .shaderRead]
+          // Create GBuffer depth texture
+          let gBufferDepthDesc: MTLTextureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: drawableWidth, height: drawableHeight, mipmapped: false)
+          gBufferDepthDesc.sampleCount = 1
+          gBufferDepthDesc.storageMode = .private
+          gBufferDepthDesc.textureType = .type2D
+          gBufferDepthDesc.usage = [.renderTarget, .shaderRead]
 
-            gBufferDepthTexture = device.makeTexture(descriptor: gBufferDepthDesc)
+          gBufferDepthTexture = device.makeTexture(descriptor: gBufferDepthDesc)
 
-            // Build GBuffer depth/stencil state
-            // Again we create a descriptor that describes the object we're about to create
-            let gBufferDepthStencilStateDescriptor: MTLDepthStencilDescriptor = MTLDepthStencilDescriptor()
-            gBufferDepthStencilStateDescriptor.isDepthWriteEnabled = true
-            gBufferDepthStencilStateDescriptor.depthCompareFunction = .lessEqual
-            gBufferDepthStencilStateDescriptor.frontFaceStencil = nil
-            gBufferDepthStencilStateDescriptor.backFaceStencil = nil
+          // Build GBuffer depth/stencil state
+          // Again we create a descriptor that describes the object we're about to create
+          let gBufferDepthStencilStateDescriptor: MTLDepthStencilDescriptor = MTLDepthStencilDescriptor()
+          gBufferDepthStencilStateDescriptor.isDepthWriteEnabled = true
+          gBufferDepthStencilStateDescriptor.depthCompareFunction = .lessEqual
+          gBufferDepthStencilStateDescriptor.frontFaceStencil = nil
+          gBufferDepthStencilStateDescriptor.backFaceStencil = nil
 
-            // Then we create the depth/stencil state
-            gBufferDepthStencilState = device.makeDepthStencilState(descriptor: gBufferDepthStencilStateDescriptor)
+          // Then we create the depth/stencil state
+          gBufferDepthStencilState = device.makeDepthStencilState(descriptor: gBufferDepthStencilStateDescriptor)
 
-            // Create GBuffer render pass descriptor
-            gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
-            // Specify the properties of the first color attachment (our albedo texture)
-            gBufferRenderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
-            gBufferRenderPassDescriptor.colorAttachments[0].texture = gBufferAlbedoTexture
-            gBufferRenderPassDescriptor.colorAttachments[0].loadAction = .clear
-            gBufferRenderPassDescriptor.colorAttachments[0].storeAction = .store
+          // Create GBuffer render pass descriptor
+          gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
+          // Specify the properties of the first color attachment (our albedo texture)
+          gBufferRenderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
+          gBufferRenderPassDescriptor.colorAttachments[0].texture = gBufferAlbedoTexture
+          gBufferRenderPassDescriptor.colorAttachments[0].loadAction = .clear
+          gBufferRenderPassDescriptor.colorAttachments[0].storeAction = .store
 
-            // Specify the properties of the depth attachment
-            gBufferRenderPassDescriptor.depthAttachment.loadAction = .clear
-            gBufferRenderPassDescriptor.depthAttachment.storeAction = .store
-            gBufferRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture
-            gBufferRenderPassDescriptor.depthAttachment.clearDepth = 1.0
+          // Specify the properties of the depth attachment
+          gBufferRenderPassDescriptor.depthAttachment.loadAction = .clear
+          gBufferRenderPassDescriptor.depthAttachment.storeAction = .store
+          gBufferRenderPassDescriptor.depthAttachment.texture = gBufferDepthTexture
+          gBufferRenderPassDescriptor.depthAttachment.clearDepth = 1.0
 
-            // Create GBuffer render pipeline
-            let gBufferRenderPipelineDesc = MTLRenderPipelineDescriptor()
-            gBufferRenderPipelineDesc.colorAttachments[0].pixelFormat = .rgba8Unorm
-            gBufferRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8
-            gBufferRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8
-            gBufferRenderPipelineDesc.sampleCount = 1
-            gBufferRenderPipelineDesc.label = "GBuffer Render"
-            gBufferRenderPipelineDesc.vertexFunction = library.makeFunction(name: "gBufferVert")
-            gBufferRenderPipelineDesc.fragmentFunction = library.makeFunction(name: "gBufferFrag")
-            do {
-                try gBufferRenderPipeline = device.makeRenderPipelineState(descriptor: gBufferRenderPipelineDesc)
-            } catch let error {
-                fatalError("Failed to create GBuffer pipeline state, error \(error)")
-            }
+          // Create GBuffer render pipeline
+          let gBufferRenderPipelineDesc = MTLRenderPipelineDescriptor()
+          gBufferRenderPipelineDesc.colorAttachments[0].pixelFormat = .rgba8Unorm
+          gBufferRenderPipelineDesc.depthAttachmentPixelFormat = .depth32Float_stencil8
+          gBufferRenderPipelineDesc.stencilAttachmentPixelFormat = .depth32Float_stencil8
+          gBufferRenderPipelineDesc.sampleCount = 1
+          gBufferRenderPipelineDesc.label = "GBuffer Render"
+          gBufferRenderPipelineDesc.vertexFunction = library.makeFunction(name: "gBufferVert")
+          gBufferRenderPipelineDesc.fragmentFunction = library.makeFunction(name: "gBufferFrag")
+          do {
+              try gBufferRenderPipeline = device.makeRenderPipelineState(descriptor: gBufferRenderPipelineDesc)
+          } catch let error {
+              fatalError("Failed to create GBuffer pipeline state, error \(error)")
+          }
 
-            super.init()
+          super.init()
 
-            // Now that all of our members are initialized, set ourselves as the drawing delegate of the view
-            view.delegate = self
-            view.device = device
-        }
-        // ...
-    }
+          // Now that all of our members are initialized, set ourselves as the drawing delegate of the view
+          view.delegate = self
+          view.device = device
+      }
+      // ...
+  }
 #+END_SRC
 
 
@@ -1567,4 +1568,4 @@ could cover, but I'll save that for a future tutorial.
   - [[http://www.codinglabs.net/article_gamma_vs_linear.aspx][Coding Labs: Gamma and Linear Spaces]]
   - [[http://www.gamasutra.com/blogs/DavidRosen/20100204/4322/GammaCorrect_Lighting.php][Gamasutra: Gamma-Correct Lighting]]
 
-[[top][^ Back to Top]]    
+[[top][^ Back to Top]]

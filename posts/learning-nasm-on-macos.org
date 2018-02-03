@@ -1,11 +1,11 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Learning NASM on macOS 
+#+MACRO: POST_TITLE Learning NASM on macOS
 #+INCLUDE: ../org-templates/posts_header.org
 #+OPTIONS: ^:nil
 
 ** Introduction
 
-I recently begun learning how to use NASM on macOS and thought I'd share a few tips. 
+I recently begun learning how to use NASM on macOS and thought I'd share a few tips.
 
 ** Update your nasm
 
@@ -26,7 +26,7 @@ Most tutorials for nasm are written with Linux in mind, so you'll usually need
 to make a few adjustments to get things working on macOS.
 
 [[https://gist.github.com/FiloSottile/7125822][NASM Hello World for x86 and x86_64 Intel Mac OS]] is a great place to start, and
-the [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]] a great place to go from there (see section 
+the [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]] a great place to go from there (see section
 'Using NASM on macOS').
 
 ** System call numbers are different
@@ -41,7 +41,7 @@ class of system call. You can find the system call numbers [[https://opensource.
 When linking with the C standard library I usually use gcc and let it handle the linking for me:
 
 : $ /usr/local/bin/nasm -f macho64 hello.asm
-: $ gcc -arch x86_64 -o hello hello.o 
+: $ gcc -arch x86_64 -o hello hello.o
 
 The symbol names in modules will be prefixed with an underscore, so it is necessary to
 prefix your code with an underscore when referring to that symbol. For example, most
@@ -69,7 +69,7 @@ _main:
         ret
 #+END_SRC
 
-The same goes for when exposing asm functions to C
+The same goes for when exposing asm functions to C:
 
 #+BEGIN_SRC asm
   global _maxofthree
@@ -100,18 +100,18 @@ but what does that actually mean?
   extern _puts
 
   section .text
-_main:                          
-  sub     rsp, 8                
-                                
-  lea     rdi, [message]        ; Use this instead of 'mov rdi, message' 
-  call    _puts                 
-  add     rsp, 8                
-  ret                           
+_main:
+  sub     rsp, 8
+
+  lea     rdi, [message]        ; Use this instead of 'mov rdi, message'
+  call    _puts
+  add     rsp, 8
+  ret
 
   section .data
 message:
 default rel                     ; Add 'default rel' under label
-  db   "Hola, mundo",0          
+  db   "Hola, mundo",0
 #+END_SRC
 
 Pretty simple :)
@@ -123,20 +123,20 @@ Probably the most painful thing I encountered was this line from the
 
 : "The end of the input argument area shall be aligned on a 16 (32, if __m256 is passed on stack) byte boundary. In other words, the value (%rsp + 8) is always a multiple of 16 (32) when control is transferred to the function entry point.
 
-Essentially what this means is that the stack pointer (rsp) needs to be a
-multiple of 16 (rsp % 16 == 0) before control is passed to another function.
+What this means is that the stack pointer (rsp) needs to be a multiple of 16
+(rsp % 16 == 0) before control is passed to another function.
 
 Practically, all this translates to is that depending on the current state of
 your stack you need to subtract a certain amount from your stack pointer
 (in our case the stack grows towards lower memory addresses) in order to pad the
 stack so it's address is 16-byte aligned. What you must keep in mind though is
-that the 'call' instruction will automatically push the return address 
+that the 'call' instruction will automatically push the return address
 (8 bytes - 64-bit) onto the stack. You must also remember to add to the stack
-pointer (shrink the stack) so that it's pointing to the same address it was 
-before padding. 
+pointer (shrink the stack) so that it's pointing to the same address it was
+before padding.
 
-A simple "Hola, mundo" nasm program that demonstrates this is shown below
-(modified from the [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]]):
+A simple "Hola, mundo" nasm program that demonstrates what we need to do is
+shown below (modified from the [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]]):
 
 #+BEGIN_SRC asm
 ; ------------------------------------------------------------------------------
@@ -151,19 +151,19 @@ A simple "Hola, mundo" nasm program that demonstrates this is shown below
   extern _puts
 
   section .text
-_main:                          ; This is called by the C library startup code
+_main:
   sub     rsp, 8                ; Pad stack frame as required for 64-bit OSX
-                                ;  - we know the 'call' instruction will add 
+                                ;  - we know the 'call' instruction will add
                                 ;    8 bytes to the stack, so we pad it with
                                 ;    another 8 bytes.
 
-  lea     rdi, [message]        ; First integer (or pointer) argument in rdi
-  call    _puts                 ; puts(message)
+  lea     rdi, [message]
+  call    _puts
 
   add     rsp, 8                ; Get our old stack pointer back by removing our
-                                ; previous padding 
+                                ; previous padding
 
-  ret                           ; Return from main back into C library wrapper
+  ret
 
   section .data
 message:
@@ -180,7 +180,7 @@ function.
 
 Note that we don't always need to subtract and add 8 bytes from the stack
 pointer, this number will vary depending on the current state of your stack. For
-example, in the following program, we add no bytes to the stack pointer, it's
+example, in the following program we add no bytes to the stack pointer, it's
 already 16-byte aligned (modified from the [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]]):
 
 #+BEGIN_SRC asm
@@ -244,7 +244,7 @@ default rel
 
 ** Resources
 
-I hope that was helpful, here are some interesting/important links (you can also follow my progress [[https://github.com/sevanspowell/learn-nasm][here if you want]]):
+I hope that was helpful, here are some interesting/important links (you can also follow my progress with NASM [[https://github.com/sevanspowell/learn-nasm][here]]):
 
 - [[http://www.nasm.us/xdoc/2.12.02/html/nasmdoc0.html][NASM Manual]]
 - [[http://cs.lmu.edu/~ray/notes/nasmtutorial/][NASM Tutorial]] (especially see the section towards the bottom titled: "Using NASM on macOS")
@@ -255,4 +255,4 @@ I hope that was helpful, here are some interesting/important links (you can also
 - [[http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/][Writing 64-bit Assembly on Mac OSX]]
 - [[http://www.kylem.net/programming/bf_interp.html][Brainf*ck interpreter in x86-64 assembly]] (good for it's macOS focus)
 
-[[top][^ Back to Top]]    
+[[top][^ Back to Top]]
