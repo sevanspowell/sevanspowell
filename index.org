@@ -6,7 +6,7 @@
    - GitHub: [[https://github.com/sevanspowell][sevanspowell]]
    - Twitter: [[https://twitter.com/sevanspowell][@sevanspowell]]
 * Posts
-  - [[file:posts/category-theory-and-haskell.org][Where Category Theory and Haskell Meet]]
+  - [[file:posts/category-theory-and-haskell.org][Where Category Theory and Haskell Meet]] DRAFT
   - [[file:posts/simple-raytracer.org][A Simple Raytracer]]
   - [[file:posts/learning-nasm-on-macos.org][Learning NASM on macOS]]
   - [[file:posts/implementing-deferred-shading-in-metal.org][Implementing Deferred Shading in Metal]]

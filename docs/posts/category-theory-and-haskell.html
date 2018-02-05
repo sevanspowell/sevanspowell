@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-05 Mon 15:29 -->
+<!-- 2018-02-05 Mon 15:58 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -65,9 +65,9 @@ for the JavaScript code in this tag.
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-org39b2c5c" class="outline-2">
-<h2 id="org39b2c5c">Where Category Theory and Haskell Meet</h2>
-<div class="outline-text-2" id="text-org39b2c5c">
+<div id="outline-container-orgaddd2e3" class="outline-2">
+<h2 id="orgaddd2e3">Where Category Theory and Haskell Meet - DRAFT</h2>
+<div class="outline-text-2" id="text-orgaddd2e3">
 <p>
 What is abstraction? Abstraction is a learned skill where we make a conscious
 decision to magnifiy the similarities between "things" and ignore their
@@ -149,9 +149,9 @@ One example of a type class is the Monoid type class (*):
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>
-  mempty  <span style="color: #bf8b56;">::</span> a
-  mappend <span style="color: #bf8b56;">::</span> a <span style="color: #bf8b56;">-&gt;</span> a <span style="color: #bf8b56;">-&gt;</span> a
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">class</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> a <span style="color: #3a81c3; font-weight: bold;">where</span>
+  mempty  <span style="color: #715ab1;">::</span> a
+  mappend <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> a <span style="color: #715ab1;">-&gt;</span> a
 </pre>
 </div>
 </div>
@@ -194,12 +194,12 @@ We can express this in Haskell by declaring Integer to be an instance of Monoid:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>
-  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>
-  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+  mempty  <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+  mempty <span style="color: #715ab1;">=</span> <span style="color: #4e3163;">1</span>
 
-  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>
-  mappend <span style="color: #bf8b56;">=</span> <span style="color: #bf568b;">(</span><span style="color: #bf8b56;">*</span><span style="color: #bf568b;">)</span>
+  mappend <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+  mappend <span style="color: #715ab1;">=</span> <span style="color: #3a81c3;">(</span><span style="color: #715ab1;">*</span><span style="color: #3a81c3;">)</span>
 </pre>
 </div>
 
@@ -248,17 +248,15 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 <h3 id="orgfa159a5">References</h3>
 <div class="outline-text-3" id="text-orgfa159a5">
 <p>
-[1] <i>Category Theory for Programmers</i>, Bartosz Milewski,
-<a href="https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/</a>
+[1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: <a href="https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/</a>. [Accessed: 01- Feb- 2018].
 </p>
 
 <p>
-[2] Bartosz Milewski Cat theory vids on Youtube
+[2] B. Milewski, Category Theory. 2016. Available: <a href="https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM">https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM</a>_.
 </p>
 
 <p>
-[3] <i>Type Class: The Ultimate Ad Hoc</i>, George Wilson,
-<a href="https://www.youtube.com/watch?v=2EdQFCP5mZ8">https://www.youtube.com/watch?v=2EdQFCP5mZ8</a>
+[3] G. Wilson, Compose :: Melbourne 2017 - George Wilson - Type Class: The Ultimate Ad Hoc. 2017. Available: <a href="https://www.youtube.com/watch?v=2EdQFCP5mZ8">https://www.youtube.com/watch?v=2EdQFCP5mZ8</a>.
 </p>
 </div>
 </div>
@@ -266,7 +264,7 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-05 Mon 15:29</p>
+<p class="date">Created: 2018-02-05 Mon 15:58</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

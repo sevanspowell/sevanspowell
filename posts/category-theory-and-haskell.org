@@ -1,5 +1,5 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Where Category Theory and Haskell Meet
+#+MACRO: POST_TITLE Where Category Theory and Haskell Meet - DRAFT
 #+INCLUDE: ../org-templates/posts_short_header.org
 
 What is abstraction? Abstraction is a learned skill where we make a conscious
@@ -125,11 +125,8 @@ how category theory can help you write more generic code.
 
 ** References
 
-[1] /Category Theory for Programmers/, Bartosz Milewski,
-https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/
+[1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/. [Accessed: 01- Feb- 2018].
 
-[2] Bartosz Milewski Cat theory vids on Youtube
+[2] B. Milewski, Category Theory. 2016. Available: https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM_.
 
-[3] /Type Class: The Ultimate Ad Hoc/, George Wilson,
-https://www.youtube.com/watch?v=2EdQFCP5mZ8
-
+[3] G. Wilson, Compose :: Melbourne 2017 - George Wilson - Type Class: The Ultimate Ad Hoc. 2017. Available: https://www.youtube.com/watch?v=2EdQFCP5mZ8.

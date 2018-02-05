@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-05 Mon 15:29 -->
+<!-- 2018-02-05 Mon 15:58 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -172,13 +172,13 @@ tutorials will be written for Linux and include something like this:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">        <span style="color: #bf568b;">global</span>  main
-        <span style="color: #bf568b;">extern</span>  puts
+<pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  main
+        <span style="color: #3a81c3; font-weight: bold;">extern</span>  puts
 
-        <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">main</span>:
-        <span style="color: #bf568b;">call</span>    puts
-        <span style="color: #bf568b;">ret</span>
+        <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">main</span>:
+        <span style="color: #3a81c3; font-weight: bold;">call</span>    puts
+        <span style="color: #3a81c3; font-weight: bold;">ret</span>
 </pre>
 </div>
 
@@ -187,13 +187,13 @@ You'll instead need to do this:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">        <span style="color: #bf568b;">global</span>  _main
-        <span style="color: #bf568b;">extern</span>  _puts
+<pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  _main
+        <span style="color: #3a81c3; font-weight: bold;">extern</span>  _puts
 
-        <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">_main</span>:
-        <span style="color: #bf568b;">call</span>    _puts
-        <span style="color: #bf568b;">ret</span>
+        <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">_main</span>:
+        <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
+        <span style="color: #3a81c3; font-weight: bold;">ret</span>
 </pre>
 </div>
 
@@ -202,12 +202,12 @@ The same goes for when exposing asm functions to C:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">  <span style="color: #bf568b;">global</span> _maxofthree
+<pre class="src src-asm">  <span style="color: #3a81c3; font-weight: bold;">global</span> _maxofthree
 
-  <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">_maxofthree</span>:
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">...</span>
-  <span style="color: #bf568b;">ret</span>
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">_maxofthree</span>:
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">...</span>
+  <span style="color: #3a81c3; font-weight: bold;">ret</span>
 </pre>
 </div>
 </div>
@@ -224,30 +224,30 @@ but what does that actually mean?
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">other system that does not use underscores for symbols in its C library. To</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
-<span style="color: #405c79;">;</span>
-<span style="color: #405c79;">;   </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 
-  <span style="color: #bf568b;">global</span> _main
-  <span style="color: #bf568b;">extern</span> _puts
+  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
+  <span style="color: #3a81c3; font-weight: bold;">extern</span> _puts
 
-  <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">_main</span>:
-  <span style="color: #bf568b;">sub</span>     rsp, 8
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">_main</span>:
+  <span style="color: #3a81c3; font-weight: bold;">sub</span>     rsp, 8
 
-  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>message<span style="color: #bf568b;">]</span>        <span style="color: #405c79;">; </span><span style="color: #627e99;">Use this instead of 'mov rdi, message'</span>
-  <span style="color: #bf568b;">call</span>    _puts
-  <span style="color: #bf568b;">add</span>     rsp, 8
-  <span style="color: #bf568b;">ret</span>
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>        <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Use this instead of 'mov rdi, message'</span>
+  <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
+  <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8
+  <span style="color: #3a81c3; font-weight: bold;">ret</span>
 
-  <span style="color: #bf568b;">section</span> .data
-<span style="color: #8b56bf;">message</span>:
-<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>                     <span style="color: #405c79;">; </span><span style="color: #627e99;">Add 'default rel' under label</span>
-  <span style="color: #bf568b;">db</span>   <span style="color: #56bf8b;">"Hola, mundo"</span>,0
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .data
+<span style="color: #6c3163; font-weight: bold;">message</span>:
+<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>                     <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Add 'default rel' under label</span>
+  <span style="color: #3a81c3; font-weight: bold;">db</span>   <span style="color: #2d9574;">"Hola, mundo"</span>,0
 </pre>
 </div>
 
@@ -292,37 +292,37 @@ shown below (modified from the <a href="http://cs.lmu.edu/~ray/notes/nasmtutoria
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">other system that does not use underscores for symbols in its C library. To</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
-<span style="color: #405c79;">;</span>
-<span style="color: #405c79;">;   </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 
-  <span style="color: #bf568b;">global</span> _main
-  <span style="color: #bf568b;">extern</span> _puts
+  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
+  <span style="color: #3a81c3; font-weight: bold;">extern</span> _puts
 
-  <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">_main</span>:
-  <span style="color: #bf568b;">sub</span>     rsp, 8                <span style="color: #405c79;">; </span><span style="color: #627e99;">Pad stack frame as required for 64-bit OSX</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">- we know the 'call' instruction will add</span>
-                                <span style="color: #405c79;">;    </span><span style="color: #627e99;">8 bytes to the stack, so we pad it with</span>
-                                <span style="color: #405c79;">;    </span><span style="color: #627e99;">another 8 bytes.</span>
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">_main</span>:
+  <span style="color: #3a81c3; font-weight: bold;">sub</span>     rsp, 8                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Pad stack frame as required for 64-bit OSX</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">- we know the 'call' instruction will add</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">8 bytes to the stack, so we pad it with</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">another 8 bytes.</span>
 
-  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>message<span style="color: #bf568b;">]</span>
-  <span style="color: #bf568b;">call</span>    _puts
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>
+  <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
 
-  <span style="color: #bf568b;">add</span>     rsp, 8                <span style="color: #405c79;">; </span><span style="color: #627e99;">Get our old stack pointer back by removing our</span>
-                                <span style="color: #405c79;">; </span><span style="color: #627e99;">previous padding</span>
+  <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Get our old stack pointer back by removing our</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">previous padding</span>
 
-  <span style="color: #bf568b;">ret</span>
+  <span style="color: #3a81c3; font-weight: bold;">ret</span>
 
-  <span style="color: #bf568b;">section</span> .data
-<span style="color: #8b56bf;">message</span>:
-<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>
-  <span style="color: #bf568b;">db</span>   <span style="color: #56bf8b;">"Hola, mundo"</span>,0          <span style="color: #405c79;">; </span><span style="color: #627e99;">Note that strings must be terminated with 0</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">in C</span>
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .data
+<span style="color: #6c3163; font-weight: bold;">message</span>:
+<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>
+  <span style="color: #3a81c3; font-weight: bold;">db</span>   <span style="color: #2d9574;">"Hola, mundo"</span>,0          <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Note that strings must be terminated with 0</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">in C</span>
 </pre>
 </div>
 
@@ -342,62 +342,62 @@ already 16-byte aligned (modified from the <a href="http://cs.lmu.edu/~ray/notes
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">-----------------------------------------------------------------------------</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">A 64-bit Mac OSX application that writes the first 90 Fibonacci numbers. To</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
-<span style="color: #405c79;">;</span>
-<span style="color: #405c79;">;     </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 fib.asm &amp;&amp; gcc -arch x86_64 -o fib fib.o &amp;&amp; ./fib</span>
-<span style="color: #405c79;">; </span><span style="color: #627e99;">-----------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">-----------------------------------------------------------------------------</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">A 64-bit Mac OSX application that writes the first 90 Fibonacci numbers. To</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;     </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 fib.asm &amp;&amp; gcc -arch x86_64 -o fib fib.o &amp;&amp; ./fib</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">-----------------------------------------------------------------------------</span>
 
-  <span style="color: #bf568b;">global</span> _main
-  <span style="color: #bf568b;">extern</span> _printf
+  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
+  <span style="color: #3a81c3; font-weight: bold;">extern</span> _printf
 
-  <span style="color: #bf568b;">section</span> .text
-<span style="color: #8b56bf;">_main</span>:
-  <span style="color: #bf568b;">push</span>    rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">we have to save this since we use it</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">(we are required to preserve rbx)</span>
+  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
+<span style="color: #6c3163; font-weight: bold;">_main</span>:
+  <span style="color: #3a81c3; font-weight: bold;">push</span>    rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">we have to save this since we use it</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">(we are required to preserve rbx)</span>
 
-  <span style="color: #bf568b;">mov</span>     ecx, 90               <span style="color: #405c79;">; </span><span style="color: #627e99;">ecx will countdown to 0</span>
-  <span style="color: #bf568b;">xor</span>     rax, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">rax will hold the current number (clear to 0)</span>
-  <span style="color: #bf568b;">xor</span>     rbx, rbx              <span style="color: #405c79;">; </span><span style="color: #627e99;">rbx will hold the next number (clear to 0)</span>
-  <span style="color: #bf568b;">inc</span>     rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">rbx is originally 1</span>
+  <span style="color: #3a81c3; font-weight: bold;">mov</span>     ecx, 90               <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">ecx will countdown to 0</span>
+  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rax, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rax will hold the current number (clear to 0)</span>
+  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rbx, rbx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rbx will hold the next number (clear to 0)</span>
+  <span style="color: #3a81c3; font-weight: bold;">inc</span>     rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rbx is originally 1</span>
 
-<span style="color: #8b56bf;">print</span>:
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">We need to call printf, but we are using rax, rbx and rcx. printf may</span>
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">destroy rax and rcx, so we will save these before the call and restore them</span>
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">afterwards.</span>
+<span style="color: #6c3163; font-weight: bold;">print</span>:
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">We need to call printf, but we are using rax, rbx and rcx. printf may</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">destroy rax and rcx, so we will save these before the call and restore them</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">afterwards.</span>
 
-  <span style="color: #bf568b;">push</span>    rax                   <span style="color: #405c79;">; </span><span style="color: #627e99;">caller - save register</span>
-  <span style="color: #bf568b;">push</span>    rcx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">caller - save register</span>
+  <span style="color: #3a81c3; font-weight: bold;">push</span>    rax                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
+  <span style="color: #3a81c3; font-weight: bold;">push</span>    rcx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
 
-  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>format<span style="color: #bf568b;">]</span>         <span style="color: #405c79;">; </span><span style="color: #627e99;">set 1st parameter (format)</span>
-  <span style="color: #bf568b;">mov</span>     rsi, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">set 2nd parameter (current_number)</span>
-  <span style="color: #bf568b;">xor</span>     rax, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">zero rax before call to printf</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">note that rax is used to indicate the number</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">of vector registers used with variable arg</span>
-                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">functions (such as printf)</span>
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>format<span style="color: #3a81c3;">]</span>         <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 1st parameter (format)</span>
+  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rsi, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 2nd parameter (current_number)</span>
+  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rax, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">zero rax before call to printf</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">note that rax is used to indicate the number</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">of vector registers used with variable arg</span>
+                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">functions (such as printf)</span>
 
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">Stack is already aligned because we pushed three 8-byte registers and the</span>
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">call instruction will push the return address (which on a 64-bit machine,</span>
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">is 8 bytes). This gives us 32 bytes total, meaning the stack pointer is</span>
-  <span style="color: #405c79;">; </span><span style="color: #627e99;">already 16-byte aligned.</span>
-  <span style="color: #bf568b;">call</span>    _printf               <span style="color: #405c79;">; </span><span style="color: #627e99;">printf(format, current_number)</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Stack is already aligned because we pushed three 8-byte registers and the</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">call instruction will push the return address (which on a 64-bit machine,</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">is 8 bytes). This gives us 32 bytes total, meaning the stack pointer is</span>
+  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">already 16-byte aligned.</span>
+  <span style="color: #3a81c3; font-weight: bold;">call</span>    _printf               <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">printf(format, current_number)</span>
 
-  <span style="color: #bf568b;">pop</span>     rcx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore caller-saved register</span>
-  <span style="color: #bf568b;">pop</span>     rax                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore caller-saved register</span>
+  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rcx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore caller-saved register</span>
+  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rax                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore caller-saved register</span>
 
-  <span style="color: #bf568b;">mov</span>     rdx, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">save the current number</span>
-  <span style="color: #bf568b;">mov</span>     rax, rbx              <span style="color: #405c79;">; </span><span style="color: #627e99;">next number is now current</span>
-  <span style="color: #bf568b;">add</span>     rbx, rdx              <span style="color: #405c79;">; </span><span style="color: #627e99;">get the new next number (fibonacci seq.)</span>
-  <span style="color: #bf568b;">dec</span>     ecx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">count down</span>
-  <span style="color: #bf568b;">jnz</span>     print                 <span style="color: #405c79;">; </span><span style="color: #627e99;">continue until counter reaches 0</span>
+  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rdx, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">save the current number</span>
+  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rax, rbx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">next number is now current</span>
+  <span style="color: #3a81c3; font-weight: bold;">add</span>     rbx, rdx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">get the new next number (fibonacci seq.)</span>
+  <span style="color: #3a81c3; font-weight: bold;">dec</span>     ecx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">count down</span>
+  <span style="color: #3a81c3; font-weight: bold;">jnz</span>     print                 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">continue until counter reaches 0</span>
 
-  <span style="color: #bf568b;">pop</span>     rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore rbx before returning</span>
-  <span style="color: #bf568b;">ret</span>
+  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore rbx before returning</span>
+  <span style="color: #3a81c3; font-weight: bold;">ret</span>
 
-<span style="color: #8b56bf;">format</span>:
-<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>
-  <span style="color: #bf568b;">db</span>    <span style="color: #56bf8b;">"%20ld"</span>, 10, 0
+<span style="color: #6c3163; font-weight: bold;">format</span>:
+<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>
+  <span style="color: #3a81c3; font-weight: bold;">db</span>    <span style="color: #2d9574;">"%20ld"</span>, 10, 0
 </pre>
 </div>
 </div>
@@ -430,7 +430,7 @@ I hope that was helpful, here are some interesting/important links (you can also
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-05 Mon 15:29</p>
+<p class="date">Created: 2018-02-05 Mon 15:58</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
