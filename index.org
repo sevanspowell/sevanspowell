@@ -15,5 +15,4 @@
   - [[file:projects/deferred-shading-in-metal.org][Deferred Shading in Metal]]
   - [[file:projects/draygon-tensor.org][University game engine project]]
   - [[file:projects/star-sliders.org][Star Sliders]]
-  - [[file:projects/sane.org][A simple POSIX shell]]
-    
+  - [[file:projects/sane.org][A simple POSIX shell]] 

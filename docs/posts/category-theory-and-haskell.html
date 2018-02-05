@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-05 Mon 14:47 -->
+<!-- 2018-02-05 Mon 15:29 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -149,8 +149,8 @@ One example of a type class is the Monoid type class (*):
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>&#57344;&#57345;&#57345;
-  mempty  <span style="color: #bf8b56;">::</span> a&#57344;&#57345;&#57345;
+<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>
+  mempty  <span style="color: #bf8b56;">::</span> a
   mappend <span style="color: #bf8b56;">::</span> a <span style="color: #bf8b56;">-&gt;</span> a <span style="color: #bf8b56;">-&gt;</span> a
 </pre>
 </div>
@@ -194,11 +194,11 @@ We can express this in Haskell by declaring Integer to be an instance of Monoid:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>&#57344;&#57345;&#57345;
-  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>&#57344;&#57345;&#57345;
-  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
-&#57344;&#57345;&#57345;
-  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>&#57344;&#57345;&#57345;
+<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>
+  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>
+  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>
+
+  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>
   mappend <span style="color: #bf8b56;">=</span> <span style="color: #bf568b;">(</span><span style="color: #bf8b56;">*</span><span style="color: #bf568b;">)</span>
 </pre>
 </div>
@@ -266,7 +266,7 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-05 Mon 14:47</p>
+<p class="date">Created: 2018-02-05 Mon 15:29</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
