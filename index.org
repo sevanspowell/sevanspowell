@@ -5,13 +5,15 @@
    - Email: samueldavid.ep@gmail.com
    - GitHub: [[https://github.com/sevanspowell][sevanspowell]]
    - Twitter: [[https://twitter.com/sevanspowell][@sevanspowell]]
+* Posts
+  - [[file:posts/category-theory-and-haskell.org][Where Category Theory and Haskell Meet]]
+  - [[file:posts/simple-raytracer.org][A Simple Raytracer]]
+  - [[file:posts/learning-nasm-on-macos.org][Learning NASM on macOS]]
+  - [[file:posts/implementing-deferred-shading-in-metal.org][Implementing Deferred Shading in Metal]]
+  - [[file:posts/getting-started-with-low-level-graphics-programming.org][Getting Started with Low-Level Graphics Programming]]
 * Recent Projects
   - [[file:projects/deferred-shading-in-metal.org][Deferred Shading in Metal]]
   - [[file:projects/draygon-tensor.org][University game engine project]]
   - [[file:projects/star-sliders.org][Star Sliders]]
   - [[file:projects/sane.org][A simple POSIX shell]]
-* Posts
-  - [[file:posts/simple-raytracer.org][A Simple Raytracer]]
-  - [[file:posts/learning-nasm-on-macos.org][Learning NASM on macOS]]
-  - [[file:posts/implementing-deferred-shading-in-metal.org][Implementing Deferred Shading in Metal]]
-  - [[file:posts/getting-started-with-low-level-graphics-programming.org][Getting Started with Low-Level Graphics Programming]]
+    

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-02-05 Mon 14:46 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Samuel Evans-Powell</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="orgf21ea88"></a>
+<a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-orgc8f0c7b" class="outline-2">
+<h2 id="orgc8f0c7b">Publishing a Website in Org-Mode</h2>
+<div class="outline-text-2" id="text-orgc8f0c7b">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgc8f0c7b">Publishing a Website in Org-Mode</a>
+<ul>
+<li><a href="#org603b755">Getting started</a></li>
+<li><a href="#org60fc7a2">Generating Figures</a>
+<ul>
+<li><a href="#orga16bac0">Ditaa</a></li>
+<li><a href="#org341962f">PlantUML</a></li>
+</ul>
+</li>
+<li><a href="#orge72c9d4">Navigation</a></li>
+<li><a href="#org3f7bc8d">From here</a></li>
+<li><a href="#orgb19deaf">External links</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<p>
+Static site generators such as pelican [insert link] and Jekyll [? insert link]
+allow you to write website content in plain text formats like Markdown and
+quickly convert that content into webpages. You can do the same with org-mode!
+All without leaving the safety of your Emacs application.
+</p>
+
+<p>
+This guide is based off work by Bernt Hansen and his awesome org-mode post <a href="http://doc.norang.ca/org-mode.html#Publishing">here</a>,
+with help from <a href="http://orgmode.org/worg/org-tutorials/org-publish-html-tutorial.html#Special-comment-section">this</a> org-mode tutorial. The <a href="https://www.gnu.org/software/emacs/manual/html_node/org/Publishing.html">org-mode manual</a> is also very helpful
+on this topic and is well worth a read.
+</p>
+
+<p>
+This post won't be an introduction to Emacs [insert link] or <a href="http://spacemacs.org">Spacemacs</a>, and
+since I'll be using <a href="http://spacemacs.org">Spacemacs</a>, instructions might be a little bit different if
+you're using Emacs. 
+</p>
+
+<p>
+This website is published using org-mode and can be found <a href="https://github.com/sevanspowell/sevanspowell">here</a>. My dotfiles
+(including my .spacemacs file) can be found <a href="https://github.com/sevanspowell/dotfiles">here</a>.
+</p>
+</div>
+
+<div id="outline-container-org603b755" class="outline-3">
+<h3 id="org603b755">Getting started</h3>
+<div class="outline-text-3" id="text-org603b755">
+<p>
+To get started, let's go ahead and create a website folder.
+</p>
+
+<pre class="example">
+my-website/
+   |- css/                     ;; We'll keep css files here 
+   |  `- stylesheet.css        ;; Website stylesheet
+   |- img/                     ;; We'll keep image files here
+   `- index.org                ;; Our website homepage
+
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org60fc7a2" class="outline-3">
+<h3 id="org60fc7a2">Generating Figures</h3>
+<div class="outline-text-3" id="text-org60fc7a2">
+</div><div id="outline-container-orga16bac0" class="outline-4">
+<h4 id="orga16bac0">Ditaa</h4>
+</div>
+<div id="outline-container-org341962f" class="outline-4">
+<h4 id="org341962f">PlantUML</h4>
+</div>
+</div>
+
+<div id="outline-container-orge72c9d4" class="outline-3">
+<h3 id="orge72c9d4">Navigation</h3>
+</div>
+
+<div id="outline-container-org3f7bc8d" class="outline-3">
+<h3 id="org3f7bc8d">From here</h3>
+<div class="outline-text-3" id="text-org3f7bc8d">
+<p>
+You can do many more awesome things with publishing in org-mode. I found looking
+at the source files for the <a href="http://orgmode.org">org-mode website</a> extremely helpful (it's all
+published using org!). You can find the source <a href="http://orgmode.org/worg/sources/">here</a> and a description of how the
+website is published <a href="http://orgmode.org/worg/worg-setup.html">here</a>. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb19deaf" class="outline-3">
+<h3 id="orgb19deaf">External links</h3>
+<div class="outline-text-3" id="text-orgb19deaf">
+<ul class="org-ul">
+<li><a href="http://spacemacs.org">Spacemacs</a></li>
+<li><a href="https://github.com/sevanspowell/sevanspowell">Site GitHub</a></li>
+<li><a href="https://github.com/sevanspowell/dotfiles">My dotfiles</a></li>
+<li><a href="http://orgmode.org/worg/index.html">Helpful Org-mode site</a></li>
+<li><a href="http://doc.norang.ca/org-mode.html#Publishing">Norang publishing tutorial</a></li>
+<li><a href="http://orgmode.org/worg/sources/">Org-mode site source</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-02-05 Mon 14:46</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

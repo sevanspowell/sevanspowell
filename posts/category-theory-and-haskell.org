@@ -1,0 +1,135 @@
+#+SETUPFILE: ../org-templates/posts.org
+#+MACRO: POST_TITLE Where Category Theory and Haskell Meet
+#+INCLUDE: ../org-templates/posts_short_header.org
+
+What is abstraction? Abstraction is a learned skill where we make a conscious
+decision to magnifiy the similarities between "things" and ignore their
+differences.
+
+As software developers, why do we value abstraction? When we take an abstract
+view of our our code we deal with /essence/ rather than implementation. We think
+primarily in terms /shape/, or /form/, and /behaviour/ rather than the sequence
+of instructions required to create a complete program.
+
+This abstract way of thinking magnifies the similarities between "things" in our
+codebase and helps us to identify common patterns in our code, whether that
+commonality is in form or in behaviour. This means that we can generalize and
+write code that is powerful in the sense that it can be used and re-used on many
+different "things", provided that they exhibit certain behaviour or have
+a certain form. This is the promise of interfaces in languages like C++ and Java
+(there are a few reasons why interfaces don't always live up to that promise
+[3], but I'll avoid that topic for now). Abstraction also helps us to reason
+about code (ours and other's) because it allows us to view the behaviour of the
+code at higher, cognitively-easier-to-process level.
+
+We call the abstract things we create 'abstractions'. Wouldn't it be nice if we
+had a field of mathematics (and the years of research that entails) that could
+aid us in identifying abstractions? That could provide a solid foundation for us
+to build our programs on?
+
+It turns out that we do: Category Theory. Category Theory is the study, ...
+Category Theory, practically, is the ... The nice thing about using an
+established field of mathematics is that the abstractions identified by Category
+Theory are usually very general and stable, which encourages the creation of
+re-usable code, which is exactly what we want.
+
+Bartosz Milewski has a great series on /Category Theory for Programmers/ [1],
+but I won't be so thorough, hopefully this series of articles will give you a
+practical but light understanding of Type Classes in Haskell and how they're
+useful to us (and their relationship with Category Theory).
+
+** Type classes
+
+(Skip to the next article if you already understand the concept of Type
+classes).
+
+Type classes can be thought of as Haskell's version of the interfaces in other
+languages. This is far from strictly true, but is a good enough comparison to
+serve as our intuition: a set of functions with no implementation (or a default
+implementation) that data types must implement to be considered an instance of
+the type class.
+
+Type classes allow us to express common, repeated patterns in our code and to in
+future, treat many different types objects as instances of that type class
+(provided they conform to the interface the type class defines).
+
+** Monoid
+
+One example of a type class is the Monoid type class (*):
+
+#+BEGIN_SRC haskell
+class Monoid a where
+  mempty  :: a
+  mappend :: a -> a -> a
+#+END_SRC
+
+*** What is a Monoid?
+
+Monoid is used to categorize data types that have a binary operation, and a
+value that acts a neutral element in this operation. Pretty abstract isn't it?
+When approaching category theory, get used to thinking at this kind of abstract
+level. When writing C++, I tended to think too concretely to be able to identify
+these kind of patterns.
+
+An example: integers form a monoid under multiplication. Multiplication is the
+binary operation:
+
+#+BEGIN_SRC txt
+3 * 3 = 9
+#+END_SRC
+
+and the integer '1' is the neutral element, as any integer ~x~ multiplied by 1
+gives us back ~x~:
+
+#+BEGIN_SRC txt
+3 * 1 = 3
+-4 * 1 = -4
+x * 1 = x
+#+END_SRC
+
+We can express this in Haskell by declaring Integer to be an instance of Monoid:
+
+#+BEGIN_SRC haskell
+instance Monoid Integer where
+  mempty  :: Integer
+  mempty = 1
+
+  mappend :: Integer -> Integer -> Integer
+  mappend = (*)
+#+END_SRC
+
+Note that integers also form a monoid under addition. Because there can only be
+one instance of a type class for a given type, Haskell wraps Integers into 'Sum'
+and 'Product' types, the first forming a Monoid under addition and the second
+under multiplication. Don't worry about this too much.
+
+Many other things form a Monoid. For example, lists form a Monoid under
+concatenation (++), with an empty list ([]) acting as the neutral element
+(Strings also form a Monoid under concatenation, since strings are just lists of
+characters in Haskell).
+
+
+Words like *Monoid*, *Functor*, *Applicative* and *Monad* sound scary, but
+they're only 'mathy' words used to describe collections of common properties
+that things have and laws they obey. 
+
+'things' that have specific
+properties and obey certain laws. With this series of posts I hope to get you
+past the initial hurdles to understanding these powerful patterns and show you
+how category theory can help you write more generic code.
+
+** Notes
+
+ * The Monoid type class has a third function (mconcat) but it can be derived
+   from the first two functions ([[https://hackage.haskell.org/package/base-4.10.1.0/docs/src/GHC.Base.html#line-226][source]]).
+
+** References
+
+[1] /Category Theory for Programmers/, Bartosz Milewski,
+https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/
+
+[2] Bartosz Milewski Cat theory vids on Youtube
+
+[3] /Type Class: The Ultimate Ad Hoc/, George Wilson,
+https://www.youtube.com/watch?v=2EdQFCP5mZ8
+

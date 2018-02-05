@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-02-05 Mon 14:46 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Samuel Evans-Powell</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="org7679e43"></a><a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-org2767310" class="outline-2">
+<h2 id="org2767310">Draygon Tensor</h2>
+<div class="outline-text-2" id="text-org2767310">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org2767310">Draygon Tensor</a>
+<ul>
+<li><a href="#org1d6ffa5">Things learnt</a></li>
+<li><a href="#org0cf03df">Engine architecture</a></li>
+<li><a href="#orgc5e6109">Developing data formats</a></li>
+<li><a href="#org9bf20b5">Cross-platform build system</a></li>
+<li><a href="#orgac54b8c">Physics</a></li>
+<li><a href="#orge40e1f6">Scripting</a></li>
+<li><a href="#org62c6634">Blender plugins</a>
+<ul>
+<li><a href="#org55b7516">Export script</a></li>
+<li><a href="#org4f77f80">Affordance plugin</a></li>
+<li><a href="#org4a6fa3a">Rigid body plugin</a></li>
+</ul>
+</li>
+<li><a href="#orgd9cf28a">Math library</a></li>
+<li><a href="#orgf1a92fe">External links</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<p>
+<i>A game engine developed with three others as part of a university project.</i>
+</p>
+
+<p>
+ <style>.embed-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; } .embed-container iframe, .embed-container object, .embed-container embed { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }</style><div class='embed-container'><iframe src='https://www.youtube.com/embed/wDD68iO0O_M' frameborder='0' allowfullscreen></iframe></div>
+</p>
+</div>
+
+<div id="outline-container-org1d6ffa5" class="outline-3">
+<h3 id="org1d6ffa5">Things learnt</h3>
+<div class="outline-text-3" id="text-org1d6ffa5">
+<ul class="org-ul">
+<li>How to apply forces to rigid bodies and calculate their resulting linear and angular motion.</li>
+<li>Physics engine architecture.</li>
+<li>How data-oriented design increases flexibility and decreases iteration time.</li>
+<li>How to develop external tools for a game engine.</li>
+<li>The importance of a solid build system.</li>
+<li>Group and time management.</li>
+</ul>
+
+<p>
+Some of my responsibilities included:
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0cf03df" class="outline-3">
+<h3 id="org0cf03df">Engine architecture</h3>
+<div class="outline-text-3" id="text-org0cf03df">
+<p>
+The engine is a fairly lightweight class that aggregates systems. Systems are a
+collection of functionality that contain and operate on some data. Systems
+communicate with one another using the message bus, the engine class is
+responsible for passing those messages between systems. An entity-component
+system is used to manage, and provide functionality to, objects in the scene.
+</p>
+
+<p>
+For example, the 'Physics' system may own a number of physics components. These
+physics components contain information about the physical properties of an
+object (e.g. inertia tensor). The physics system interfaces with a physics
+engine to update these physics components. The physics system then sends
+messages to other systems in the engine, so they can update their components if
+necessary.
+</p>
+
+<p>
+This architecture was inspired by Randy Gaul (and his series of articles <a href="http://www.randygaul.net/2013/05/20/component-based-engine-design/">here</a>),
+Niklas Frykholm (especially his entity-component system articles <a href="http://bitsquid.blogspot.com.au/2014/08/building-data-oriented-entity-system.html">here</a>), and
+various posts from Sean Middleditch (<a href="http://seanmiddleditch.com">blog</a>).
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/Engine.cpp">Engine class</a></li>
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/ISystem.h">System interface</a></li>
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/message/MessageBus.cpp">Message bus class</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgc5e6109" class="outline-3">
+<h3 id="orgc5e6109">Developing data formats</h3>
+<div class="outline-text-3" id="text-orgc5e6109">
+<p>
+I was responsible for developing the data formats the engine uses.
+</p>
+
+<p>
+The engine is almost completely data-driven; startup parameters are specified in
+a 'config.json' file, the functionality of the game is specified in a Lua file
+(which has access to a number of exposed engine methods), '.prefab' files
+specify how to construct objects in the scene and '.material', '.shader',
+'.texture', and '.mesh' files specify the properties of those objects (these are
+all custom json-formats).
+</p>
+
+<ul class="org-ul">
+<li><a href="https://gist.github.com/sevanspowell/d70e3702cc96abf42ec23f49b46a557b">Example .prefab file</a></li>
+<li><a href="https://gist.github.com/sevanspowell/e1ea6b8dab2c31ac2789d98234f18936">Example config.json</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org9bf20b5" class="outline-3">
+<h3 id="org9bf20b5">Cross-platform build system</h3>
+<div class="outline-text-3" id="text-org9bf20b5">
+<p>
+I used CMake to create the build system for the project, all required
+dependencies are downloaded as part of the build (if required).
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/cmake/superbuild/Superbuild.cmake">Superbuild.cmake</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgac54b8c" class="outline-3">
+<h3 id="orgac54b8c">Physics</h3>
+<div class="outline-text-3" id="text-orgac54b8c">
+<p>
+Our physics engine was based off the <a href="https://github.com/idmillington/cyclone-physics">cyclone physics engine</a>.
+</p>
+
+<p>
+I was responsible for integrating our physics engine with the game engine and
+also worked on various parts of the physics engine.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/physics/Physics.cpp">Physics/game engine integration</a></li>
+<li><a href="https://github.com/sevanspowell/DraygonTensor/tree/develop/src/engine/system/physics">Physics engine</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orge40e1f6" class="outline-3">
+<h3 id="orge40e1f6">Scripting</h3>
+<div class="outline-text-3" id="text-orge40e1f6">
+<p>
+Lua was used as a scripting language for the engine. I was responsible for
+integrating Lua into the game engine and creating and documenting the Lua
+bindings.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/script/Script.cpp">Lua game engine integration</a></li>
+<li><a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/engine/system/physics/PhysicsLuaBindings.cpp">An example of some Lua bindings</a></li>
+<li><a href="https://sevanspowell.github.io/DraygonTensor-api/">Lua API documentation</a></li>
+<li><a href="https://gist.github.com/sevanspowell/67f008b1836ef4c92b889f551f8f0e99">An example Lua script</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org62c6634" class="outline-3">
+<h3 id="org62c6634">Blender plugins</h3>
+<div class="outline-text-3" id="text-org62c6634">
+</div><div id="outline-container-org55b7516" class="outline-4">
+<h4 id="org55b7516">Export script</h4>
+<div class="outline-text-4" id="text-org55b7516">
+<p>
+<a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L487">init.py</a>
+</p>
+
+<p>
+I developed a Blender script that takes an entire Blender scene and outputs it
+in a format our game engine expects.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4f77f80" class="outline-4">
+<h4 id="org4f77f80">Affordance plugin</h4>
+<div class="outline-text-4" id="text-org4f77f80">
+<p>
+<a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L96">init.py</a>
+</p>
+
+<p>
+The affordance plugin allows us to specify the affordances of an object using
+the Blender UI.
+</p>
+
+
+<div class="figure">
+<p><img src="../img/affordancesClose.png" alt="affordancesClose.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org4a6fa3a" class="outline-4">
+<h4 id="org4a6fa3a">Rigid body plugin</h4>
+<div class="outline-text-4" id="text-org4a6fa3a">
+<p>
+<a href="https://github.com/sevanspowell/DraygonTensor/blob/develop/src/blender/addons/io_draygon/__init__.py#L171">init.py</a>
+</p>
+
+<p>
+The rigid body plugin allows a user to add collision shapes, mass and inertia
+tensor properties to an object using Blender's UI.
+</p>
+
+
+<div class="figure">
+<p><img src="../img/rigidbodyClose.png" alt="rigidbodyClose.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd9cf28a" class="outline-3">
+<h3 id="orgd9cf28a">Math library</h3>
+<div class="outline-text-3" id="text-orgd9cf28a">
+<p>
+I was also responsible for creating and testing the math library.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor/tree/develop/src/math">Math Library</a></li>
+<li><a href="https://github.com/sevanspowell/DraygonTensor/tree/develop/test/src/math">Tests using GoogleTest library</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgf1a92fe" class="outline-3">
+<h3 id="orgf1a92fe">External links</h3>
+<div class="outline-text-3" id="text-orgf1a92fe">
+<ul class="org-ul">
+<li><a href="https://github.com/sevanspowell/DraygonTensor">GitHub</a></li>
+</ul>
+
+<p>
+<a href="#org7679e43">^ Back to Top</a>    
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-02-05 Mon 14:46</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

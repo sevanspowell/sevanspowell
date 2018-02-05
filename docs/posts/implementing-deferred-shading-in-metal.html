@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-04 Sun 10:40 -->
+<!-- 2018-02-05 Mon 14:47 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -61,46 +61,46 @@ for the JavaScript code in this tag.
 <div id="content">
 <h1 class="title">Samuel Evans-Powell</h1>
 <p>
-<a id="orgefbbc43"></a>
+<a id="org0c66d06"></a>
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-org7c771d0" class="outline-2">
-<h2 id="org7c771d0">Implementing Deferred Shading in Metal</h2>
-<div class="outline-text-2" id="text-org7c771d0">
+<div id="outline-container-orgbb5923b" class="outline-2">
+<h2 id="orgbb5923b">Implementing Deferred Shading in Metal</h2>
+<div class="outline-text-2" id="text-orgbb5923b">
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org7c771d0">Implementing Deferred Shading in Metal</a></li>
-<li><a href="#org818012c">Introduction</a></li>
-<li><a href="#orgd1ff1c3">Process</a></li>
-<li><a href="#orgf2bb12c">Implementation</a>
+<li><a href="#orgbb5923b">Implementing Deferred Shading in Metal</a></li>
+<li><a href="#org03e1241">Introduction</a></li>
+<li><a href="#orgf58d581">Process</a></li>
+<li><a href="#orgd10abbc">Implementation</a>
 <ul>
-<li><a href="#orgaf26203">GBuffer pass</a>
+<li><a href="#orgeaf3142">GBuffer pass</a>
 <ul>
-<li><a href="#orgf14bc9f">Albedo and depth</a></li>
-<li><a href="#org316cb0d">Normal and position</a></li>
+<li><a href="#org51a3d8b">Albedo and depth</a></li>
+<li><a href="#org58e099b">Normal and position</a></li>
 </ul>
 </li>
-<li><a href="#orgb7223a0">Stencil pass</a>
+<li><a href="#orgf3ddad3">Stencil pass</a>
 <ul>
-<li><a href="#orgd057733">Prepare the light volumes</a></li>
-<li><a href="#org19f8f2a">Make the stencil pass</a></li>
+<li><a href="#org6f6a6fd">Prepare the light volumes</a></li>
+<li><a href="#org4f95a8c">Make the stencil pass</a></li>
 </ul>
 </li>
-<li><a href="#orga28616b">Lighting pass</a>
+<li><a href="#org88f92ae">Lighting pass</a>
 <ul>
-<li><a href="#orged19682">A first pass</a></li>
-<li><a href="#org97674b8">Improving those shaders</a></li>
-<li><a href="#org4f2f9f1">An aside on gamma correction</a></li>
+<li><a href="#orgca4cce9">A first pass</a></li>
+<li><a href="#org3589d44">Improving those shaders</a></li>
+<li><a href="#org198f7e8">An aside on gamma correction</a></li>
 </ul>
 </li>
-<li><a href="#org0939233">Handling window resizing</a></li>
+<li><a href="#org9ebcdc5">Handling window resizing</a></li>
 </ul>
 </li>
-<li><a href="#org8a326ac">Conclusion</a></li>
-<li><a href="#org2f64a25">Related links</a></li>
+<li><a href="#orgc8363ab">Conclusion</a></li>
+<li><a href="#org8209a9d">Related links</a></li>
 </ul>
 </div>
 </div>
@@ -108,9 +108,9 @@ for the JavaScript code in this tag.
 </div>
 
 
-<div id="outline-container-org818012c" class="outline-2">
-<h2 id="org818012c">Introduction</h2>
-<div class="outline-text-2" id="text-org818012c">
+<div id="outline-container-org03e1241" class="outline-2">
+<h2 id="org03e1241">Introduction</h2>
+<div class="outline-text-2" id="text-org03e1241">
 <p>
 Deferred shading is a rendering technique usually used to optimize scenes with
 a large number of light sources. Rather than perform expensive lighting
@@ -121,9 +121,9 @@ lights.
 </div>
 </div>
 
-<div id="outline-container-orgd1ff1c3" class="outline-2">
-<h2 id="orgd1ff1c3">Process</h2>
-<div class="outline-text-2" id="text-orgd1ff1c3">
+<div id="outline-container-orgf58d581" class="outline-2">
+<h2 id="orgf58d581">Process</h2>
+<div class="outline-text-2" id="text-orgf58d581">
 <p>
 The process of my particular implementation of deferred shading is as follows:
 </p>
@@ -209,9 +209,9 @@ The final result looks something like this:
 </div>
 </div>
 
-<div id="outline-container-orgf2bb12c" class="outline-2">
-<h2 id="orgf2bb12c">Implementation</h2>
-<div class="outline-text-2" id="text-orgf2bb12c">
+<div id="outline-container-orgd10abbc" class="outline-2">
+<h2 id="orgd10abbc">Implementation</h2>
+<div class="outline-text-2" id="text-orgd10abbc">
 <p>
 The concept is actually quite simple, implementing it can be a little tricky,
 especially when using a framework you're not familiar with.
@@ -246,12 +246,12 @@ program in hand: <a href="https://github.com/sevanspowell/MetalDeferredLightingT
 </p>
 </div>
 
-<div id="outline-container-orgaf26203" class="outline-3">
-<h3 id="orgaf26203">GBuffer pass</h3>
-<div class="outline-text-3" id="text-orgaf26203">
-</div><div id="outline-container-orgf14bc9f" class="outline-4">
-<h4 id="orgf14bc9f">Albedo and depth</h4>
-<div class="outline-text-4" id="text-orgf14bc9f">
+<div id="outline-container-orgeaf3142" class="outline-3">
+<h3 id="orgeaf3142">GBuffer pass</h3>
+<div class="outline-text-3" id="text-orgeaf3142">
+</div><div id="outline-container-org51a3d8b" class="outline-4">
+<h4 id="org51a3d8b">Albedo and depth</h4>
+<div class="outline-text-4" id="text-org51a3d8b">
 <p>
 Let's setup our GBuffer pass. For now, we'll just render the scene albedo and depth.
 </p>
@@ -498,9 +498,9 @@ a texture.
 </div>
 </div>
 
-<div id="outline-container-org316cb0d" class="outline-4">
-<h4 id="org316cb0d">Normal and position</h4>
-<div class="outline-text-4" id="text-org316cb0d">
+<div id="outline-container-org58e099b" class="outline-4">
+<h4 id="org58e099b">Normal and position</h4>
+<div class="outline-text-4" id="text-org58e099b">
 <p>
 First, the normal data. Add a normal texture to the renderer:
 </p>
@@ -891,12 +891,12 @@ Great! We've finished rendering the GBuffer data from our scene. Now onto the st
 </div>
 </div>
 
-<div id="outline-container-orgb7223a0" class="outline-3">
-<h3 id="orgb7223a0">Stencil pass</h3>
-<div class="outline-text-3" id="text-orgb7223a0">
-</div><div id="outline-container-orgd057733" class="outline-4">
-<h4 id="orgd057733">Prepare the light volumes</h4>
-<div class="outline-text-4" id="text-orgd057733">
+<div id="outline-container-orgf3ddad3" class="outline-3">
+<h3 id="orgf3ddad3">Stencil pass</h3>
+<div class="outline-text-3" id="text-orgf3ddad3">
+</div><div id="outline-container-org6f6a6fd" class="outline-4">
+<h4 id="org6f6a6fd">Prepare the light volumes</h4>
+<div class="outline-text-4" id="text-org6f6a6fd">
 <p>
 Before we can render any lights, we need to prepare the meshes that will
 represent the light volumes. For now we're only going to represent point lights
@@ -1133,9 +1133,9 @@ code.
 </div>
 </div>
 
-<div id="outline-container-org19f8f2a" class="outline-4">
-<h4 id="org19f8f2a">Make the stencil pass</h4>
-<div class="outline-text-4" id="text-org19f8f2a">
+<div id="outline-container-org4f95a8c" class="outline-4">
+<h4 id="org4f95a8c">Make the stencil pass</h4>
+<div class="outline-text-4" id="text-org4f95a8c">
 <p>
 Let's start with the shaders:
 </p>
@@ -1359,12 +1359,12 @@ is filled for now.
 </div>
 </div>
 
-<div id="outline-container-orga28616b" class="outline-3">
-<h3 id="orga28616b">Lighting pass</h3>
-<div class="outline-text-3" id="text-orga28616b">
-</div><div id="outline-container-orged19682" class="outline-4">
-<h4 id="orged19682">A first pass</h4>
-<div class="outline-text-4" id="text-orged19682">
+<div id="outline-container-org88f92ae" class="outline-3">
+<h3 id="org88f92ae">Lighting pass</h3>
+<div class="outline-text-3" id="text-org88f92ae">
+</div><div id="outline-container-orgca4cce9" class="outline-4">
+<h4 id="orgca4cce9">A first pass</h4>
+<div class="outline-text-4" id="text-orgca4cce9">
 <p>
 Let's start off with some simplified shaders for our lighting pass:
 </p>
@@ -1631,9 +1631,9 @@ visualization purposes.
 </div>
 </div>
 
-<div id="outline-container-org97674b8" class="outline-4">
-<h4 id="org97674b8">Improving those shaders</h4>
-<div class="outline-text-4" id="text-org97674b8">
+<div id="outline-container-org3589d44" class="outline-4">
+<h4 id="org3589d44">Improving those shaders</h4>
+<div class="outline-text-4" id="text-org3589d44">
 <p>
 We have all that information from the GBuffer available to us in our shaders,
 let's use it!
@@ -1845,9 +1845,9 @@ And another with no texture, so that you can see the lights better:
 </div>
 </div>
 
-<div id="outline-container-org4f2f9f1" class="outline-4">
-<h4 id="org4f2f9f1">An aside on gamma correction</h4>
-<div class="outline-text-4" id="text-org4f2f9f1">
+<div id="outline-container-org198f7e8" class="outline-4">
+<h4 id="org198f7e8">An aside on gamma correction</h4>
+<div class="outline-text-4" id="text-org198f7e8">
 <p>
 Gamma correction, it's really important:
 </p>
@@ -1873,9 +1873,9 @@ Further reading:
 </div>
 </div>
 
-<div id="outline-container-org0939233" class="outline-3">
-<h3 id="org0939233">Handling window resizing</h3>
-<div class="outline-text-3" id="text-org0939233">
+<div id="outline-container-org9ebcdc5" class="outline-3">
+<h3 id="org9ebcdc5">Handling window resizing</h3>
+<div class="outline-text-3" id="text-org9ebcdc5">
 <p>
 Up to now, we haven't been handling resize events, let's fix this:
 </p>
@@ -1963,9 +1963,9 @@ Up to now, we haven't been handling resize events, let's fix this:
 </div>
 </div>
 
-<div id="outline-container-org8a326ac" class="outline-2">
-<h2 id="org8a326ac">Conclusion</h2>
-<div class="outline-text-2" id="text-org8a326ac">
+<div id="outline-container-orgc8363ab" class="outline-2">
+<h2 id="orgc8363ab">Conclusion</h2>
+<div class="outline-text-2" id="text-orgc8363ab">
 <p>
 That demonstrates the core concepts of deferred shading. There's plenty more we
 could cover, but I'll save that for a future tutorial.
@@ -1973,9 +1973,9 @@ could cover, but I'll save that for a future tutorial.
 </div>
 </div>
 
-<div id="outline-container-org2f64a25" class="outline-2">
-<h2 id="org2f64a25">Related links</h2>
-<div class="outline-text-2" id="text-org2f64a25">
+<div id="outline-container-org8209a9d" class="outline-2">
+<h2 id="org8209a9d">Related links</h2>
+<div class="outline-text-2" id="text-org8209a9d">
 <ul class="org-ul">
 <li><a href="http://ogldev.atspace.co.uk/www/tutorial35/tutorial35.html">OGLDev - Deferred Shading Part 1</a></li>
 <li><a href="https://learnopengl.com/#!Advanced-Lighting/Deferred-Shading">Learn OpenGL - Deferred Shading</a></li>
@@ -1987,14 +1987,14 @@ could cover, but I'll save that for a future tutorial.
 </ul>
 
 <p>
-<a href="#orgefbbc43">^ Back to Top</a>
+<a href="#org0c66d06">^ Back to Top</a>
 </p>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-04 Sun 10:40</p>
+<p class="date">Created: 2018-02-05 Mon 14:47</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

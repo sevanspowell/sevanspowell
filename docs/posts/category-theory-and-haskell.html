@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-02-05 Mon 14:47 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Samuel Evans-Powell</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="org142c29c"></a>
+<a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-org39b2c5c" class="outline-2">
+<h2 id="org39b2c5c">Where Category Theory and Haskell Meet</h2>
+<div class="outline-text-2" id="text-org39b2c5c">
+<p>
+What is abstraction? Abstraction is a learned skill where we make a conscious
+decision to magnifiy the similarities between "things" and ignore their
+differences.
+</p>
+
+<p>
+As software developers, why do we value abstraction? When we take an abstract
+view of our our code we deal with <i>essence</i> rather than implementation. We think
+primarily in terms <i>shape</i>, or <i>form</i>, and <i>behaviour</i> rather than the sequence
+of instructions required to create a complete program.
+</p>
+
+<p>
+This abstract way of thinking magnifies the similarities between "things" in our
+codebase and helps us to identify common patterns in our code, whether that
+commonality is in form or in behaviour. This means that we can generalize and
+write code that is powerful in the sense that it can be used and re-used on many
+different "things", provided that they exhibit certain behaviour or have
+a certain form. This is the promise of interfaces in languages like C++ and Java
+(there are a few reasons why interfaces don't always live up to that promise
+[3], but I'll avoid that topic for now). Abstraction also helps us to reason
+about code (ours and other's) because it allows us to view the behaviour of the
+code at higher, cognitively-easier-to-process level.
+</p>
+
+<p>
+We call the abstract things we create 'abstractions'. Wouldn't it be nice if we
+had a field of mathematics (and the years of research that entails) that could
+aid us in identifying abstractions? That could provide a solid foundation for us
+to build our programs on?
+</p>
+
+<p>
+It turns out that we do: Category Theory. Category Theory is the study, &#x2026;
+Category Theory, practically, is the &#x2026; The nice thing about using an
+established field of mathematics is that the abstractions identified by Category
+Theory are usually very general and stable, which encourages the creation of
+re-usable code, which is exactly what we want.
+</p>
+
+<p>
+Bartosz Milewski has a great series on <i>Category Theory for Programmers</i> [1],
+but I won't be so thorough, hopefully this series of articles will give you a
+practical but light understanding of Type Classes in Haskell and how they're
+useful to us (and their relationship with Category Theory).
+</p>
+</div>
+
+<div id="outline-container-org5ae81b1" class="outline-3">
+<h3 id="org5ae81b1">Type classes</h3>
+<div class="outline-text-3" id="text-org5ae81b1">
+<p>
+(Skip to the next article if you already understand the concept of Type
+classes).
+</p>
+
+<p>
+Type classes can be thought of as Haskell's version of the interfaces in other
+languages. This is far from strictly true, but is a good enough comparison to
+serve as our intuition: a set of functions with no implementation (or a default
+implementation) that data types must implement to be considered an instance of
+the type class.
+</p>
+
+<p>
+Type classes allow us to express common, repeated patterns in our code and to in
+future, treat many different types objects as instances of that type class
+(provided they conform to the interface the type class defines).
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf92691c" class="outline-3">
+<h3 id="orgf92691c">Monoid</h3>
+<div class="outline-text-3" id="text-orgf92691c">
+<p>
+One example of a type class is the Monoid type class (*):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>&#57344;&#57345;&#57345;
+  mempty  <span style="color: #bf8b56;">::</span> a&#57344;&#57345;&#57345;
+  mappend <span style="color: #bf8b56;">::</span> a <span style="color: #bf8b56;">-&gt;</span> a <span style="color: #bf8b56;">-&gt;</span> a
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org1b9253f" class="outline-4">
+<h4 id="org1b9253f">What is a Monoid?</h4>
+<div class="outline-text-4" id="text-org1b9253f">
+<p>
+Monoid is used to categorize data types that have a binary operation, and a
+value that acts a neutral element in this operation. Pretty abstract isn't it?
+When approaching category theory, get used to thinking at this kind of abstract
+level. When writing C++, I tended to think too concretely to be able to identify
+these kind of patterns.
+</p>
+
+<p>
+An example: integers form a monoid under multiplication. Multiplication is the
+binary operation:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-txt">3 * 3 = 9
+</pre>
+</div>
+
+<p>
+and the integer '1' is the neutral element, as any integer <code>x</code> multiplied by 1
+gives us back <code>x</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-txt">3 * 1 = 3
+-4 * 1 = -4
+x * 1 = x
+</pre>
+</div>
+
+<p>
+We can express this in Haskell by declaring Integer to be an instance of Monoid:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>&#57344;&#57345;&#57345;
+  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>&#57344;&#57345;&#57345;
+  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>&#57344;&#57345;&#57345;
+&#57344;&#57345;&#57345;
+  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>&#57344;&#57345;&#57345;
+  mappend <span style="color: #bf8b56;">=</span> <span style="color: #bf568b;">(</span><span style="color: #bf8b56;">*</span><span style="color: #bf568b;">)</span>
+</pre>
+</div>
+
+<p>
+Note that integers also form a monoid under addition. Because there can only be
+one instance of a type class for a given type, Haskell wraps Integers into 'Sum'
+and 'Product' types, the first forming a Monoid under addition and the second
+under multiplication. Don't worry about this too much.
+</p>
+
+<p>
+Many other things form a Monoid. For example, lists form a Monoid under
+concatenation (++), with an empty list ([]) acting as the neutral element
+(Strings also form a Monoid under concatenation, since strings are just lists of
+characters in Haskell).
+</p>
+
+
+<p>
+Words like <b>Monoid</b>, <b>Functor</b>, <b>Applicative</b> and <b>Monad</b> sound scary, but
+they're only 'mathy' words used to describe collections of common properties
+that things have and laws they obey. 
+</p>
+
+<p>
+'things' that have specific
+properties and obey certain laws. With this series of posts I hope to get you
+past the initial hurdles to understanding these powerful patterns and show you
+how category theory can help you write more generic code.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcec0e21" class="outline-3">
+<h3 id="orgcec0e21">Notes</h3>
+<div class="outline-text-3" id="text-orgcec0e21">
+<ul class="org-ul">
+<li>The Monoid type class has a third function (mconcat) but it can be derived
+from the first two functions (<a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/src/GHC.Base.html#line-226">source</a>).</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgfa159a5" class="outline-3">
+<h3 id="orgfa159a5">References</h3>
+<div class="outline-text-3" id="text-orgfa159a5">
+<p>
+[1] <i>Category Theory for Programmers</i>, Bartosz Milewski,
+<a href="https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/</a>
+</p>
+
+<p>
+[2] Bartosz Milewski Cat theory vids on Youtube
+</p>
+
+<p>
+[3] <i>Type Class: The Ultimate Ad Hoc</i>, George Wilson,
+<a href="https://www.youtube.com/watch?v=2EdQFCP5mZ8">https://www.youtube.com/watch?v=2EdQFCP5mZ8</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-02-05 Mon 14:47</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
