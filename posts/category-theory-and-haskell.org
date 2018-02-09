@@ -1,61 +1,66 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Where Category Theory and Haskell Meet - DRAFT
+#+MACRO: POST_TITLE Haskell & Category Theory - DRAFT
 #+INCLUDE: ../org-templates/posts_short_header.org
 
-What is abstraction? Abstraction is a learned skill where we make a conscious
-decision to magnifiy the similarities between "things" and ignore their
-differences.
+/I've been learning alot about Haskell and Category Theory lately. In this/
+/series of posts I hope to collect my thoughts. Please pop me an email or open a/
+/pull request [[https://github.com/sevanspowell/sevanspowell][here]] if you want to make any suggestions/corrections./
 
-As software developers, why do we value abstraction? When we take an abstract
-view of our our code we deal with /essence/ rather than implementation. We think
-primarily in terms /shape/, or /form/, and /behaviour/ rather than the sequence
-of instructions required to create a complete program.
+** Abstraction
 
-This abstract way of thinking magnifies the similarities between "things" in our
-codebase and helps us to identify common patterns in our code, whether that
-commonality is in form or in behaviour. This means that we can generalize and
-write code that is powerful in the sense that it can be used and re-used on many
-different "things", provided that they exhibit certain behaviour or have
-a certain form. This is the promise of interfaces in languages like C++ and Java
-(there are a few reasons why interfaces don't always live up to that promise
-[3], but I'll avoid that topic for now). Abstraction also helps us to reason
-about code (ours and other's) because it allows us to view the behaviour of the
-code at higher, cognitively-easier-to-process level.
+Software developers do alot of abstraction. What is abstraction? Abstraction is
+a learned skill where we make a conscious decision to magnifiy the similarities
+between "things" and ignore their differences. In doing so we create
+'abstractions': interfaces that take advantage of common patterns of /form/ and
+/behaviour/ in our code to allow us to think about our programs at a higher
+level. A car provides us a with a simple interface (pedals, steering wheel) to
+operate a very complex machine. As drivers, we (usually) don't have to worry
+about the internals of our car, we merely operate the interface. This is an
+example of abstraction.
 
-We call the abstract things we create 'abstractions'. Wouldn't it be nice if we
-had a field of mathematics (and the years of research that entails) that could
-aid us in identifying abstractions? That could provide a solid foundation for us
-to build our programs on?
+# This abstract way of thinking magnifies the similarities between "things" in our
+# codebase and helps us to identify common patterns. This means that we can
+# generalize and write code that is powerful in the sense that it can be used and
+# re-used on many different "things", provided that they exhibit certain behaviour
+# or have a certain form. This is the promise of interfaces in languages like C++
+# and Java (there are a few reasons why interfaces don't always live up to that
+# promise [3], but I'll avoid that topic for now). Abstraction also helps us to
+# better reason about code (ours and other's) because it allows us to view the
+# behaviour of the code at higher, cognitively-easier-to-process level.
 
-It turns out that we do: Category Theory. Category Theory is the study, ...
-Category Theory, practically, is the ... The nice thing about using an
-established field of mathematics is that the abstractions identified by Category
-Theory are usually very general and stable, which encourages the creation of
-re-usable code, which is exactly what we want.
+We build abstractions for files, memory, HTTP requests, web forms, etc. Wouldn't
+it be nice if we had a field of mathematics (and the years of research that
+entails) that could aid us in identifying abstractions? That could provide a
+solid foundation for us to build our programs on?
 
-Bartosz Milewski has a great series on /Category Theory for Programmers/ [1],
-but I won't be so thorough, hopefully this series of articles will give you a
-practical but light understanding of Type Classes in Haskell and how they're
-useful to us (and their relationship with Category Theory).
+It turns out that we do: Category Theory. Category Theory can be seen as the
+general study of structures and mappings between structures.
+
+I find Category Theory exciting because it provides a more principled source of
+abstractions for programmers to build their programs on. The nice thing about
+using an established field of mathematics is that the abstractions identified by
+Category Theory are usually very general and stable, which encourages the
+creation of general, re-usable code, a much desired property.
+
+Bartosz Milewski has a great series called /Category Theory for Programmers/
+[1][2], but I'm not knowledgeable enought to so thorough, hopefully this series
+of articles will instead give you a practical but light understanding of Type
+Classes in Haskell, how they're useful to us, and their relationship with
+Category Theory.
 
 ** Type classes
 
-(Skip to the next article if you already understand the concept of Type
-classes).
-
 Type classes can be thought of as Haskell's version of the interfaces in other
-languages. This is far from strictly true, but is a good enough comparison to
-serve as our intuition: a set of functions with no implementation (or a default
-implementation) that data types must implement to be considered an instance of
-the type class.
+languages. This is not strictly true, but is good enough to serve as our
+intuition: a set of functions with no implementation (or a default
+implementation) that data types must implement to be considered an instance.
 
-Type classes allow us to express common, repeated patterns in our code and to in
-future, treat many different types objects as instances of that type class
-(provided they conform to the interface the type class defines).
+Type classes allow us to express common, repeated patterns in our code and to,
+in future, treat many different data types according to a common interface.
 
 ** Monoid
 
-One example of a type class is the Monoid type class (*):
+One example of a type class from Category Theory is the Monoid type class (*):
 
 #+BEGIN_SRC haskell
 class Monoid a where
@@ -63,10 +68,8 @@ class Monoid a where
   mappend :: a -> a -> a
 #+END_SRC
 
-*** What is a Monoid?
-
 Monoid is used to categorize data types that have a binary operation, and a
-value that acts a neutral element in this operation. Pretty abstract isn't it?
+value that acts a neutral element in that operation. Pretty abstract isn't it?
 When approaching category theory, get used to thinking at this kind of abstract
 level. When writing C++, I tended to think too concretely to be able to identify
 these kind of patterns.
@@ -82,9 +85,9 @@ and the integer '1' is the neutral element, as any integer ~x~ multiplied by 1
 gives us back ~x~:
 
 #+BEGIN_SRC txt
-3 * 1 = 3
+ 3 * 1 =  3
 -4 * 1 = -4
-x * 1 = x
+ x * 1 =  x
 #+END_SRC
 
 We can express this in Haskell by declaring Integer to be an instance of Monoid:
@@ -104,19 +107,16 @@ and 'Product' types, the first forming a Monoid under addition and the second
 under multiplication. Don't worry about this too much.
 
 Many other things form a Monoid. For example, lists form a Monoid under
-concatenation (++), with an empty list ([]) acting as the neutral element
-(Strings also form a Monoid under concatenation, since strings are just lists of
-characters in Haskell).
+concatenation (++). The empty list ([]) acts as the neutral element in this
+operation.
 
+Now that we've defined a Monoid instance for our Integers, we can use them
+wherever we can use a Monoid. There is a wealth of standard library functions
+that deal with Monoids and this is part of the power of type classes.
 
-Words like *Monoid*, *Functor*, *Applicative* and *Monad* sound scary, but
-they're only 'mathy' words used to describe collections of common properties
-that things have and laws they obey. 
-
-'things' that have specific
-properties and obey certain laws. With this series of posts I hope to get you
-past the initial hurdles to understanding these powerful patterns and show you
-how category theory can help you write more generic code.
+The next step is to try and identify these structures within your codebase. If a
+particular function is only making use of the equivalent of ~mempty~ and
+~mappend~, it can be generalized to act on Monoids.
 
 ** Notes
 
