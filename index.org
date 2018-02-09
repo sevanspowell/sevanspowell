@@ -7,7 +7,7 @@
    - Twitter: [[https://twitter.com/sevanspowell][@sevanspowell]]
 * Posts
 
-** Recent - DRAFT
+** Recent
   - [[file:posts/category-theory-and-haskell.org][Haskell and Category Theory]]
 
 ** Archive

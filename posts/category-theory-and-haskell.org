@@ -1,51 +1,43 @@
 #+SETUPFILE: ../org-templates/posts.org
-#+MACRO: POST_TITLE Haskell & Category Theory - DRAFT
+#+MACRO: POST_TITLE Haskell & Category Theory
 #+INCLUDE: ../org-templates/posts_short_header.org
 
-/I've been learning alot about Haskell and Category Theory lately. In this/
+/I've been learning about Haskell and Category Theory lately. In this/
 /series of posts I hope to collect my thoughts. Please pop me an email or open a/
-/pull request [[https://github.com/sevanspowell/sevanspowell][here]] if you want to make any suggestions/corrections./
+/pull request [[https://github.com/sevanspowell/sevanspowell][here]] if you want to make any suggestions/corrections, I'm still/
+/learning myself./
 
 ** Abstraction
 
-Software developers do alot of abstraction. What is abstraction? Abstraction is
-a learned skill where we make a conscious decision to magnifiy the similarities
-between "things" and ignore their differences. In doing so we create
-'abstractions': interfaces that take advantage of common patterns of /form/ and
-/behaviour/ in our code to allow us to think about our programs at a higher
-level. A car provides us a with a simple interface (pedals, steering wheel) to
-operate a very complex machine. As drivers, we (usually) don't have to worry
-about the internals of our car, we merely operate the interface. This is an
-example of abstraction.
+Software developers do alot of abstraction. When we "abstract", we make a
+conscious decision to magnifiy the similarities between "things" and ignore
+their differences. In doing so we create "abstractions": interfaces that take
+advantage of common patterns of /form/ and /behaviour/ in our code, allowing us
+to think about our programs at a higher level. A car provides us a with a simple
+interface (pedals, steering wheel) to operate a very complex machine. As
+drivers, we (usually) don't have to worry about the internals of our car, we
+merely operate the interface. This is an example of abstraction.
 
-# This abstract way of thinking magnifies the similarities between "things" in our
-# codebase and helps us to identify common patterns. This means that we can
-# generalize and write code that is powerful in the sense that it can be used and
-# re-used on many different "things", provided that they exhibit certain behaviour
-# or have a certain form. This is the promise of interfaces in languages like C++
-# and Java (there are a few reasons why interfaces don't always live up to that
-# promise [3], but I'll avoid that topic for now). Abstraction also helps us to
-# better reason about code (ours and other's) because it allows us to view the
-# behaviour of the code at higher, cognitively-easier-to-process level.
+As programmers we build abstractions for files, memory, HTTP requests, web
+forms, etc. Wouldn't it be nice if we had a field of mathematics (and the years
+of research that entails) to aid us in identifying abstractions? That could
+provide a solid foundation for us to build our programs on?
 
-We build abstractions for files, memory, HTTP requests, web forms, etc. Wouldn't
-it be nice if we had a field of mathematics (and the years of research that
-entails) that could aid us in identifying abstractions? That could provide a
-solid foundation for us to build our programs on?
-
-It turns out that we do: Category Theory. Category Theory can be seen as the
-general study of structures and mappings between structures.
+It turns out that we do: Category Theory. For a good definition of Category
+Theory see [[*References][1]] and [[*References][2]], but essentially Category Theory is a field concerned
+with structure, composition and identity. Category Theory provides a formal
+basis for abstractions like Monoid, Functor, Applicative and Monad. 
 
 I find Category Theory exciting because it provides a more principled source of
-abstractions for programmers to build their programs on. The nice thing about
-using an established field of mathematics is that the abstractions identified by
-Category Theory are usually very general and stable, which encourages the
-creation of general, re-usable code, a much desired property.
+abstractions and ideas for programmers to build their programs upon. The nice
+thing about using an established field of mathematics is that the abstractions
+identified by Category Theory are usually very general and stable, which
+encourages the creation of general and re-usable code: a much desired property.
 
 Bartosz Milewski has a great series called /Category Theory for Programmers/
-[1][2], but I'm not knowledgeable enought to so thorough, hopefully this series
-of articles will instead give you a practical but light understanding of Type
-Classes in Haskell, how they're useful to us, and their relationship with
+[[*References][1]] [[*References][2]], but I'm not knowledgeable enough to be so thorough, hopefully this
+series of articles will instead give you a practical but light understanding of
+Type Classes in Haskell, how they're useful to us, and their relationship with
 Category Theory.
 
 ** Type classes
@@ -128,5 +120,3 @@ particular function is only making use of the equivalent of ~mempty~ and
 [1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/. [Accessed: 01- Feb- 2018].
 
 [2] B. Milewski, Category Theory. 2016. Available: https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM_.
-
-[3] G. Wilson, Compose :: Melbourne 2017 - George Wilson - Type Class: The Ultimate Ad Hoc. 2017. Available: https://www.youtube.com/watch?v=2EdQFCP5mZ8.

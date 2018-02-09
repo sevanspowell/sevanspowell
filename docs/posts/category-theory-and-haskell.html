@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-09 Fri 11:50 -->
+<!-- 2018-02-09 Fri 16:31 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -65,84 +65,76 @@ for the JavaScript code in this tag.
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-org5bd6753" class="outline-2">
-<h2 id="org5bd6753">Haskell &amp; Category Theory - DRAFT</h2>
-<div class="outline-text-2" id="text-org5bd6753">
+<div id="outline-container-org0e61dff" class="outline-2">
+<h2 id="org0e61dff">Haskell &amp; Category Theory</h2>
+<div class="outline-text-2" id="text-org0e61dff">
 <p>
-<i>I've been learning alot about Haskell and Category Theory lately. In this</i>
+<i>I've been learning about Haskell and Category Theory lately. In this</i>
 <i>series of posts I hope to collect my thoughts. Please pop me an email or open a</i>
-<i>pull request <a href="https://github.com/sevanspowell/sevanspowell">here</a> if you want to make any suggestions/corrections.</i>
+<i>pull request <a href="https://github.com/sevanspowell/sevanspowell">here</a> if you want to make any suggestions/corrections, I'm still</i>
+<i>learning myself.</i>
+</p>
+</div>
+
+<div id="outline-container-org2835e70" class="outline-3">
+<h3 id="org2835e70">Abstraction</h3>
+<div class="outline-text-3" id="text-org2835e70">
+<p>
+Software developers do alot of abstraction. When we "abstract", we make a
+conscious decision to magnifiy the similarities between "things" and ignore
+their differences. In doing so we create "abstractions": interfaces that take
+advantage of common patterns of <i>form</i> and <i>behaviour</i> in our code, allowing us
+to think about our programs at a higher level. A car provides us a with a simple
+interface (pedals, steering wheel) to operate a very complex machine. As
+drivers, we (usually) don't have to worry about the internals of our car, we
+merely operate the interface. This is an example of abstraction.
 </p>
 
 <p>
-What is abstraction? Abstraction is a learned skill where we make a conscious
-decision to magnifiy the similarities between "things" and ignore their
-differences.
+As programmers we build abstractions for files, memory, HTTP requests, web
+forms, etc. Wouldn't it be nice if we had a field of mathematics (and the years
+of research that entails) to aid us in identifying abstractions? That could
+provide a solid foundation for us to build our programs on?
 </p>
 
 <p>
-As software developers, why do we value abstraction? When we take an abstract
-view of our our code we deal with <i>essence</i> rather than implementation. We think
-primarily in terms <i>shape</i>, or <i>form</i>, and <i>behaviour</i> rather than the sequence
-of instructions required to create a complete program.
+It turns out that we do: Category Theory. For a good definition of Category
+Theory see <a href="#orgfa159a5">1</a> and <a href="#orgfa159a5">2</a>, but essentially Category Theory is a field concerned
+with structure, composition and identity. Category Theory provides a formal
+basis for abstractions like Monoid, Functor, Applicative and Monad. 
 </p>
 
 <p>
-This abstract way of thinking magnifies the similarities between "things" in our
-codebase and helps us to identify common patterns in our code, whether that
-commonality is in form or in behaviour. This means that we can generalize and
-write code that is powerful in the sense that it can be used and re-used on many
-different "things", provided that they exhibit certain behaviour or have
-a certain form. This is the promise of interfaces in languages like C++ and Java
-(there are a few reasons why interfaces don't always live up to that promise
-[3], but I'll avoid that topic for now). Abstraction also helps us to reason
-about code (ours and other's) because it allows us to view the behaviour of the
-code at higher, cognitively-easier-to-process level.
+I find Category Theory exciting because it provides a more principled source of
+abstractions and ideas for programmers to build their programs upon. The nice
+thing about using an established field of mathematics is that the abstractions
+identified by Category Theory are usually very general and stable, which
+encourages the creation of general and re-usable code: a much desired property.
 </p>
 
 <p>
-We call the abstract things we create 'abstractions'. Wouldn't it be nice if we
-had a field of mathematics (and the years of research that entails) that could
-aid us in identifying abstractions? That could provide a solid foundation for us
-to build our programs on?
+Bartosz Milewski has a great series called <i>Category Theory for Programmers</i>
+<a href="#orgfa159a5">1</a> <a href="#orgfa159a5">2</a>, but I'm not knowledgeable enough to be so thorough, hopefully this
+series of articles will instead give you a practical but light understanding of
+Type Classes in Haskell, how they're useful to us, and their relationship with
+Category Theory.
 </p>
-
-<p>
-It turns out that we do: Category Theory. Category Theory is the study, &#x2026;
-Category Theory, practically, is the &#x2026; The nice thing about using an
-established field of mathematics is that the abstractions identified by Category
-Theory are usually very general and stable, which encourages the creation of
-re-usable code, which is exactly what we want.
-</p>
-
-<p>
-Bartosz Milewski has a great series on <i>Category Theory for Programmers</i> [1],
-but I won't be so thorough, hopefully this series of articles will give you a
-practical but light understanding of Type Classes in Haskell and how they're
-useful to us (and their relationship with Category Theory).
-</p>
+</div>
 </div>
 
 <div id="outline-container-org5ae81b1" class="outline-3">
 <h3 id="org5ae81b1">Type classes</h3>
 <div class="outline-text-3" id="text-org5ae81b1">
 <p>
-(Skip to the next article if you already understand the concept of Type
-classes).
-</p>
-
-<p>
 Type classes can be thought of as Haskell's version of the interfaces in other
-languages. This is far from strictly true, but is a good enough comparison to
-serve as our intuition: a set of functions with no implementation (or a default
-implementation) that data types must implement to be considered an instance of
-the type class.
+languages. This is not strictly true, but is good enough to serve as our
+intuition: a set of functions with no implementation (or a default
+implementation) that data types must implement to be considered an instance.
 </p>
 
 <p>
-Type classes allow us to express common, repeated patterns in our code and to in
-future, treat many different types objects as instances of that type class
-(provided they conform to the interface the type class defines).
+Type classes allow us to express common, repeated patterns in our code and to,
+in future, treat many different data types according to a common interface.
 </p>
 </div>
 </div>
@@ -151,23 +143,19 @@ future, treat many different types objects as instances of that type class
 <h3 id="orgf92691c">Monoid</h3>
 <div class="outline-text-3" id="text-orgf92691c">
 <p>
-One example of a type class is the Monoid type class (*):
+One example of a type class from Category Theory is the Monoid type class (*):
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>
-  mempty  <span style="color: #bf8b56;">::</span> a
-  mappend <span style="color: #bf8b56;">::</span> a <span style="color: #bf8b56;">-&gt;</span> a <span style="color: #bf8b56;">-&gt;</span> a
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">class</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> a <span style="color: #3a81c3; font-weight: bold;">where</span>
+  mempty  <span style="color: #715ab1;">::</span> a
+  mappend <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> a <span style="color: #715ab1;">-&gt;</span> a
 </pre>
 </div>
-</div>
 
-<div id="outline-container-org1b9253f" class="outline-4">
-<h4 id="org1b9253f">What is a Monoid?</h4>
-<div class="outline-text-4" id="text-org1b9253f">
 <p>
 Monoid is used to categorize data types that have a binary operation, and a
-value that acts a neutral element in this operation. Pretty abstract isn't it?
+value that acts a neutral element in that operation. Pretty abstract isn't it?
 When approaching category theory, get used to thinking at this kind of abstract
 level. When writing C++, I tended to think too concretely to be able to identify
 these kind of patterns.
@@ -189,9 +177,9 @@ gives us back <code>x</code>:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-txt">3 * 1 = 3
+<pre class="src src-txt"> 3 * 1 =  3
 -4 * 1 = -4
-x * 1 = x
+ x * 1 =  x
 </pre>
 </div>
 
@@ -200,12 +188,12 @@ We can express this in Haskell by declaring Integer to be an instance of Monoid:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>
-  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>
-  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+  mempty  <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+  mempty <span style="color: #715ab1;">=</span> <span style="color: #4e3163;">1</span>
 
-  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>
-  mappend <span style="color: #bf8b56;">=</span> <span style="color: #bf568b;">(</span><span style="color: #bf8b56;">*</span><span style="color: #bf568b;">)</span>
+  mappend <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+  mappend <span style="color: #715ab1;">=</span> <span style="color: #3a81c3;">(</span><span style="color: #715ab1;">*</span><span style="color: #3a81c3;">)</span>
 </pre>
 </div>
 
@@ -218,25 +206,21 @@ under multiplication. Don't worry about this too much.
 
 <p>
 Many other things form a Monoid. For example, lists form a Monoid under
-concatenation (++), with an empty list ([]) acting as the neutral element
-(Strings also form a Monoid under concatenation, since strings are just lists of
-characters in Haskell).
-</p>
-
-
-<p>
-Words like <b>Monoid</b>, <b>Functor</b>, <b>Applicative</b> and <b>Monad</b> sound scary, but
-they're only 'mathy' words used to describe collections of common properties
-that things have and laws they obey. 
+concatenation (++). The empty list ([]) acts as the neutral element in this
+operation.
 </p>
 
 <p>
-'things' that have specific
-properties and obey certain laws. With this series of posts I hope to get you
-past the initial hurdles to understanding these powerful patterns and show you
-how category theory can help you write more generic code.
+Now that we've defined a Monoid instance for our Integers, we can use them
+wherever we can use a Monoid. There is a wealth of standard library functions
+that deal with Monoids and this is part of the power of type classes.
 </p>
-</div>
+
+<p>
+The next step is to try and identify these structures within your codebase. If a
+particular function is only making use of the equivalent of <code>mempty</code> and
+<code>mappend</code>, it can be generalized to act on Monoids.
+</p>
 </div>
 </div>
 
@@ -260,17 +244,13 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 <p>
 [2] B. Milewski, Category Theory. 2016. Available: <a href="https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM">https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM</a>_.
 </p>
-
-<p>
-[3] G. Wilson, Compose :: Melbourne 2017 - George Wilson - Type Class: The Ultimate Ad Hoc. 2017. Available: <a href="https://www.youtube.com/watch?v=2EdQFCP5mZ8">https://www.youtube.com/watch?v=2EdQFCP5mZ8</a>.
-</p>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-09 Fri 11:50</p>
+<p class="date">Created: 2018-02-09 Fri 16:31</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
