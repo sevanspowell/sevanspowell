@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-09 Fri 16:31 -->
+<!-- 2018-02-09 Fri 16:36 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -61,27 +61,27 @@ for the JavaScript code in this tag.
 <div id="content">
 <h1 class="title">Samuel Evans-Powell</h1>
 <p>
-<a id="org57c827f"></a>
+<a id="org3e90e26"></a>
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-org05206d3" class="outline-2">
-<h2 id="org05206d3">Learning NASM on macOS</h2>
-<div class="outline-text-2" id="text-org05206d3">
+<div id="outline-container-orga26b99b" class="outline-2">
+<h2 id="orga26b99b">Learning NASM on macOS</h2>
+<div class="outline-text-2" id="text-orga26b99b">
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org05206d3">Learning NASM on macOS</a>
+<li><a href="#orga26b99b">Learning NASM on macOS</a>
 <ul>
-<li><a href="#org0fb82b0">Introduction</a></li>
-<li><a href="#org7aa226c">Update your nasm</a></li>
-<li><a href="#orge2cf32f">Tutorials</a></li>
-<li><a href="#orgddf2e4d">System call numbers are different</a></li>
-<li><a href="#orgea10f92">Linking with the C standard library and the '_' prefix</a></li>
-<li><a href="#orgcd3c116">Lea and Rel</a></li>
-<li><a href="#org4ea544f">The Stack Frame</a></li>
-<li><a href="#org3b4f639">Resources</a></li>
+<li><a href="#org611e1ed">Introduction</a></li>
+<li><a href="#org901ec82">Update your nasm</a></li>
+<li><a href="#org5f74e33">Tutorials</a></li>
+<li><a href="#orga421f4b">System call numbers are different</a></li>
+<li><a href="#org43753de">Linking with the C standard library and the '_' prefix</a></li>
+<li><a href="#org5e0afc0">Lea and Rel</a></li>
+<li><a href="#orgb84cc55">The Stack Frame</a></li>
+<li><a href="#orga418bb0">Resources</a></li>
 </ul>
 </li>
 </ul>
@@ -89,18 +89,18 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org0fb82b0" class="outline-3">
-<h3 id="org0fb82b0">Introduction</h3>
-<div class="outline-text-3" id="text-org0fb82b0">
+<div id="outline-container-org611e1ed" class="outline-3">
+<h3 id="org611e1ed">Introduction</h3>
+<div class="outline-text-3" id="text-org611e1ed">
 <p>
 I recently begun learning how to use NASM on macOS and thought I'd share a few tips.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org7aa226c" class="outline-3">
-<h3 id="org7aa226c">Update your nasm</h3>
-<div class="outline-text-3" id="text-org7aa226c">
+<div id="outline-container-org901ec82" class="outline-3">
+<h3 id="org901ec82">Update your nasm</h3>
+<div class="outline-text-3" id="text-org901ec82">
 <p>
 If you're using macOS and you try to compile an asm file with your default nasm
 build, you'll probably get the following message:
@@ -124,9 +124,9 @@ NASM version 0.98.40 (Apple Computer, Inc. build 11) compiled on Nov 15 2016
 </div>
 </div>
 
-<div id="outline-container-orge2cf32f" class="outline-3">
-<h3 id="orge2cf32f">Tutorials</h3>
-<div class="outline-text-3" id="text-orge2cf32f">
+<div id="outline-container-org5f74e33" class="outline-3">
+<h3 id="org5f74e33">Tutorials</h3>
+<div class="outline-text-3" id="text-org5f74e33">
 <p>
 Most tutorials for nasm are written with Linux in mind, so you'll usually need
 to make a few adjustments to get things working on macOS.
@@ -140,9 +140,9 @@ the <a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a> a gre
 </div>
 </div>
 
-<div id="outline-container-orgddf2e4d" class="outline-3">
-<h3 id="orgddf2e4d">System call numbers are different</h3>
-<div class="outline-text-3" id="text-orgddf2e4d">
+<div id="outline-container-orga421f4b" class="outline-3">
+<h3 id="orga421f4b">System call numbers are different</h3>
+<div class="outline-text-3" id="text-orga421f4b">
 <p>
 System calls numbers on macOS are different to the numbers used on Linux (e.g.
 'write' is '0x2000004' on macOS and '1' on Linux). <a href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Here's</a> a link that shows why
@@ -152,9 +152,9 @@ class of system call. You can find the system call numbers <a href="https://open
 </div>
 </div>
 
-<div id="outline-container-orgea10f92" class="outline-3">
-<h3 id="orgea10f92">Linking with the C standard library and the '_' prefix</h3>
-<div class="outline-text-3" id="text-orgea10f92">
+<div id="outline-container-org43753de" class="outline-3">
+<h3 id="org43753de">Linking with the C standard library and the '_' prefix</h3>
+<div class="outline-text-3" id="text-org43753de">
 <p>
 When linking with the C standard library I usually use gcc and let it handle the linking for me:
 </p>
@@ -172,13 +172,13 @@ tutorials will be written for Linux and include something like this:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  main
-        <span style="color: #3a81c3; font-weight: bold;">extern</span>  puts
+<pre class="src src-asm">        <span style="color: #bf568b;">global</span>  main
+        <span style="color: #bf568b;">extern</span>  puts
 
-        <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">main</span>:
-        <span style="color: #3a81c3; font-weight: bold;">call</span>    puts
-        <span style="color: #3a81c3; font-weight: bold;">ret</span>
+        <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">main</span>:
+        <span style="color: #bf568b;">call</span>    puts
+        <span style="color: #bf568b;">ret</span>
 </pre>
 </div>
 
@@ -187,13 +187,13 @@ You'll instead need to do this:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  _main
-        <span style="color: #3a81c3; font-weight: bold;">extern</span>  _puts
+<pre class="src src-asm">        <span style="color: #bf568b;">global</span>  _main
+        <span style="color: #bf568b;">extern</span>  _puts
 
-        <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">_main</span>:
-        <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
-        <span style="color: #3a81c3; font-weight: bold;">ret</span>
+        <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">_main</span>:
+        <span style="color: #bf568b;">call</span>    _puts
+        <span style="color: #bf568b;">ret</span>
 </pre>
 </div>
 
@@ -202,20 +202,20 @@ The same goes for when exposing asm functions to C:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm">  <span style="color: #3a81c3; font-weight: bold;">global</span> _maxofthree
+<pre class="src src-asm">  <span style="color: #bf568b;">global</span> _maxofthree
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">_maxofthree</span>:
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">...</span>
-  <span style="color: #3a81c3; font-weight: bold;">ret</span>
+  <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">_maxofthree</span>:
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">...</span>
+  <span style="color: #bf568b;">ret</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgcd3c116" class="outline-3">
-<h3 id="orgcd3c116">Lea and Rel</h3>
-<div class="outline-text-3" id="text-orgcd3c116">
+<div id="outline-container-org5e0afc0" class="outline-3">
+<h3 id="org5e0afc0">Lea and Rel</h3>
+<div class="outline-text-3" id="text-org5e0afc0">
 <p>
 As mentioned in the <a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a>, macOS doesn't allow absolute addressing by
 default. The tutorial suggests that you: "default rel when you are
@@ -224,30 +224,30 @@ but what does that actually mean?
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">other system that does not use underscores for symbols in its C library. To</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
+<span style="color: #405c79;">;</span>
+<span style="color: #405c79;">;   </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
-  <span style="color: #3a81c3; font-weight: bold;">extern</span> _puts
+  <span style="color: #bf568b;">global</span> _main
+  <span style="color: #bf568b;">extern</span> _puts
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">_main</span>:
-  <span style="color: #3a81c3; font-weight: bold;">sub</span>     rsp, 8
+  <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">_main</span>:
+  <span style="color: #bf568b;">sub</span>     rsp, 8
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>        <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Use this instead of 'mov rdi, message'</span>
-  <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
-  <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8
-  <span style="color: #3a81c3; font-weight: bold;">ret</span>
+  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>message<span style="color: #bf568b;">]</span>        <span style="color: #405c79;">; </span><span style="color: #627e99;">Use this instead of 'mov rdi, message'</span>
+  <span style="color: #bf568b;">call</span>    _puts
+  <span style="color: #bf568b;">add</span>     rsp, 8
+  <span style="color: #bf568b;">ret</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .data
-<span style="color: #6c3163; font-weight: bold;">message</span>:
-<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>                     <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Add 'default rel' under label</span>
-  <span style="color: #3a81c3; font-weight: bold;">db</span>   <span style="color: #2d9574;">"Hola, mundo"</span>,0
+  <span style="color: #bf568b;">section</span> .data
+<span style="color: #8b56bf;">message</span>:
+<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>                     <span style="color: #405c79;">; </span><span style="color: #627e99;">Add 'default rel' under label</span>
+  <span style="color: #bf568b;">db</span>   <span style="color: #56bf8b;">"Hola, mundo"</span>,0
 </pre>
 </div>
 
@@ -257,9 +257,9 @@ Pretty simple :)
 </div>
 </div>
 
-<div id="outline-container-org4ea544f" class="outline-3">
-<h3 id="org4ea544f">The Stack Frame</h3>
-<div class="outline-text-3" id="text-org4ea544f">
+<div id="outline-container-orgb84cc55" class="outline-3">
+<h3 id="orgb84cc55">The Stack Frame</h3>
+<div class="outline-text-3" id="text-orgb84cc55">
 <p>
 Probably the most painful thing I encountered was this line from the
 <a href="https://web.archive.org/web/20160304042454/http://x86-64.org/documentation/abi.pdf">AMD64 ABI Reference</a> (page 16):
@@ -292,37 +292,37 @@ shown below (modified from the <a href="http://cs.lmu.edu/~ray/notes/nasmtutoria
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">other system that does not use underscores for symbols in its C library. To</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
+<span style="color: #405c79;">;</span>
+<span style="color: #405c79;">;   </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">------------------------------------------------------------------------------</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
-  <span style="color: #3a81c3; font-weight: bold;">extern</span> _puts
+  <span style="color: #bf568b;">global</span> _main
+  <span style="color: #bf568b;">extern</span> _puts
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">_main</span>:
-  <span style="color: #3a81c3; font-weight: bold;">sub</span>     rsp, 8                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Pad stack frame as required for 64-bit OSX</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">- we know the 'call' instruction will add</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">8 bytes to the stack, so we pad it with</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">another 8 bytes.</span>
+  <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">_main</span>:
+  <span style="color: #bf568b;">sub</span>     rsp, 8                <span style="color: #405c79;">; </span><span style="color: #627e99;">Pad stack frame as required for 64-bit OSX</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">- we know the 'call' instruction will add</span>
+                                <span style="color: #405c79;">;    </span><span style="color: #627e99;">8 bytes to the stack, so we pad it with</span>
+                                <span style="color: #405c79;">;    </span><span style="color: #627e99;">another 8 bytes.</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>
-  <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
+  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>message<span style="color: #bf568b;">]</span>
+  <span style="color: #bf568b;">call</span>    _puts
 
-  <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Get our old stack pointer back by removing our</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">previous padding</span>
+  <span style="color: #bf568b;">add</span>     rsp, 8                <span style="color: #405c79;">; </span><span style="color: #627e99;">Get our old stack pointer back by removing our</span>
+                                <span style="color: #405c79;">; </span><span style="color: #627e99;">previous padding</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">ret</span>
+  <span style="color: #bf568b;">ret</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .data
-<span style="color: #6c3163; font-weight: bold;">message</span>:
-<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>
-  <span style="color: #3a81c3; font-weight: bold;">db</span>   <span style="color: #2d9574;">"Hola, mundo"</span>,0          <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Note that strings must be terminated with 0</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">in C</span>
+  <span style="color: #bf568b;">section</span> .data
+<span style="color: #8b56bf;">message</span>:
+<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>
+  <span style="color: #bf568b;">db</span>   <span style="color: #56bf8b;">"Hola, mundo"</span>,0          <span style="color: #405c79;">; </span><span style="color: #627e99;">Note that strings must be terminated with 0</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">in C</span>
 </pre>
 </div>
 
@@ -342,70 +342,70 @@ already 16-byte aligned (modified from the <a href="http://cs.lmu.edu/~ray/notes
 </p>
 
 <div class="org-src-container">
-<pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">-----------------------------------------------------------------------------</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">A 64-bit Mac OSX application that writes the first 90 Fibonacci numbers. To</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;     </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 fib.asm &amp;&amp; gcc -arch x86_64 -o fib fib.o &amp;&amp; ./fib</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">-----------------------------------------------------------------------------</span>
+<pre class="src src-asm"><span style="color: #405c79;">; </span><span style="color: #627e99;">-----------------------------------------------------------------------------</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">A 64-bit Mac OSX application that writes the first 90 Fibonacci numbers. To</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">assemble and run:</span>
+<span style="color: #405c79;">;</span>
+<span style="color: #405c79;">;     </span><span style="color: #627e99;">/usr/local/bin/nasm -f macho64 fib.asm &amp;&amp; gcc -arch x86_64 -o fib fib.o &amp;&amp; ./fib</span>
+<span style="color: #405c79;">; </span><span style="color: #627e99;">-----------------------------------------------------------------------------</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">global</span> _main
-  <span style="color: #3a81c3; font-weight: bold;">extern</span> _printf
+  <span style="color: #bf568b;">global</span> _main
+  <span style="color: #bf568b;">extern</span> _printf
 
-  <span style="color: #3a81c3; font-weight: bold;">section</span> .text
-<span style="color: #6c3163; font-weight: bold;">_main</span>:
-  <span style="color: #3a81c3; font-weight: bold;">push</span>    rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">we have to save this since we use it</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">(we are required to preserve rbx)</span>
+  <span style="color: #bf568b;">section</span> .text
+<span style="color: #8b56bf;">_main</span>:
+  <span style="color: #bf568b;">push</span>    rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">we have to save this since we use it</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">(we are required to preserve rbx)</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">mov</span>     ecx, 90               <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">ecx will countdown to 0</span>
-  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rax, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rax will hold the current number (clear to 0)</span>
-  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rbx, rbx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rbx will hold the next number (clear to 0)</span>
-  <span style="color: #3a81c3; font-weight: bold;">inc</span>     rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">rbx is originally 1</span>
+  <span style="color: #bf568b;">mov</span>     ecx, 90               <span style="color: #405c79;">; </span><span style="color: #627e99;">ecx will countdown to 0</span>
+  <span style="color: #bf568b;">xor</span>     rax, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">rax will hold the current number (clear to 0)</span>
+  <span style="color: #bf568b;">xor</span>     rbx, rbx              <span style="color: #405c79;">; </span><span style="color: #627e99;">rbx will hold the next number (clear to 0)</span>
+  <span style="color: #bf568b;">inc</span>     rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">rbx is originally 1</span>
 
-<span style="color: #6c3163; font-weight: bold;">print</span>:
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">We need to call printf, but we are using rax, rbx and rcx. printf may</span>
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">destroy rax and rcx, so we will save these before the call and restore them</span>
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">afterwards.</span>
+<span style="color: #8b56bf;">print</span>:
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">We need to call printf, but we are using rax, rbx and rcx. printf may</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">destroy rax and rcx, so we will save these before the call and restore them</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">afterwards.</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">push</span>    rax                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
-  <span style="color: #3a81c3; font-weight: bold;">push</span>    rcx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
+  <span style="color: #bf568b;">push</span>    rax                   <span style="color: #405c79;">; </span><span style="color: #627e99;">caller - save register</span>
+  <span style="color: #bf568b;">push</span>    rcx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">caller - save register</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>format<span style="color: #3a81c3;">]</span>         <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 1st parameter (format)</span>
-  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rsi, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 2nd parameter (current_number)</span>
-  <span style="color: #3a81c3; font-weight: bold;">xor</span>     rax, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">zero rax before call to printf</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">note that rax is used to indicate the number</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">of vector registers used with variable arg</span>
-                                <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">functions (such as printf)</span>
+  <span style="color: #bf568b;">lea</span>     rdi, <span style="color: #bf568b;">[</span>format<span style="color: #bf568b;">]</span>         <span style="color: #405c79;">; </span><span style="color: #627e99;">set 1st parameter (format)</span>
+  <span style="color: #bf568b;">mov</span>     rsi, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">set 2nd parameter (current_number)</span>
+  <span style="color: #bf568b;">xor</span>     rax, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">zero rax before call to printf</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">note that rax is used to indicate the number</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">of vector registers used with variable arg</span>
+                                <span style="color: #405c79;">;  </span><span style="color: #627e99;">functions (such as printf)</span>
 
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Stack is already aligned because we pushed three 8-byte registers and the</span>
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">call instruction will push the return address (which on a 64-bit machine,</span>
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">is 8 bytes). This gives us 32 bytes total, meaning the stack pointer is</span>
-  <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">already 16-byte aligned.</span>
-  <span style="color: #3a81c3; font-weight: bold;">call</span>    _printf               <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">printf(format, current_number)</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">Stack is already aligned because we pushed three 8-byte registers and the</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">call instruction will push the return address (which on a 64-bit machine,</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">is 8 bytes). This gives us 32 bytes total, meaning the stack pointer is</span>
+  <span style="color: #405c79;">; </span><span style="color: #627e99;">already 16-byte aligned.</span>
+  <span style="color: #bf568b;">call</span>    _printf               <span style="color: #405c79;">; </span><span style="color: #627e99;">printf(format, current_number)</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rcx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore caller-saved register</span>
-  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rax                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore caller-saved register</span>
+  <span style="color: #bf568b;">pop</span>     rcx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore caller-saved register</span>
+  <span style="color: #bf568b;">pop</span>     rax                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore caller-saved register</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rdx, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">save the current number</span>
-  <span style="color: #3a81c3; font-weight: bold;">mov</span>     rax, rbx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">next number is now current</span>
-  <span style="color: #3a81c3; font-weight: bold;">add</span>     rbx, rdx              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">get the new next number (fibonacci seq.)</span>
-  <span style="color: #3a81c3; font-weight: bold;">dec</span>     ecx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">count down</span>
-  <span style="color: #3a81c3; font-weight: bold;">jnz</span>     print                 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">continue until counter reaches 0</span>
+  <span style="color: #bf568b;">mov</span>     rdx, rax              <span style="color: #405c79;">; </span><span style="color: #627e99;">save the current number</span>
+  <span style="color: #bf568b;">mov</span>     rax, rbx              <span style="color: #405c79;">; </span><span style="color: #627e99;">next number is now current</span>
+  <span style="color: #bf568b;">add</span>     rbx, rdx              <span style="color: #405c79;">; </span><span style="color: #627e99;">get the new next number (fibonacci seq.)</span>
+  <span style="color: #bf568b;">dec</span>     ecx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">count down</span>
+  <span style="color: #bf568b;">jnz</span>     print                 <span style="color: #405c79;">; </span><span style="color: #627e99;">continue until counter reaches 0</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">pop</span>     rbx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">restore rbx before returning</span>
-  <span style="color: #3a81c3; font-weight: bold;">ret</span>
+  <span style="color: #bf568b;">pop</span>     rbx                   <span style="color: #405c79;">; </span><span style="color: #627e99;">restore rbx before returning</span>
+  <span style="color: #bf568b;">ret</span>
 
-<span style="color: #6c3163; font-weight: bold;">format</span>:
-<span style="color: #6c3163; font-weight: bold;">default</span> <span style="color: #3a81c3; font-weight: bold;">rel</span>
-  <span style="color: #3a81c3; font-weight: bold;">db</span>    <span style="color: #2d9574;">"%20ld"</span>, 10, 0
+<span style="color: #8b56bf;">format</span>:
+<span style="color: #8b56bf;">default</span> <span style="color: #bf568b;">rel</span>
+  <span style="color: #bf568b;">db</span>    <span style="color: #56bf8b;">"%20ld"</span>, 10, 0
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org3b4f639" class="outline-3">
-<h3 id="org3b4f639">Resources</h3>
-<div class="outline-text-3" id="text-org3b4f639">
+<div id="outline-container-orga418bb0" class="outline-3">
+<h3 id="orga418bb0">Resources</h3>
+<div class="outline-text-3" id="text-orga418bb0">
 <p>
 I hope that was helpful, here are some interesting/important links (you can also follow my progress with NASM <a href="https://github.com/sevanspowell/learn-nasm">here</a>):
 </p>
@@ -422,7 +422,7 @@ I hope that was helpful, here are some interesting/important links (you can also
 </ul>
 
 <p>
-<a href="#org57c827f">^ Back to Top</a>
+<a href="#org3e90e26">^ Back to Top</a>
 </p>
 </div>
 </div>
@@ -430,7 +430,7 @@ I hope that was helpful, here are some interesting/important links (you can also
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-09 Fri 16:31</p>
+<p class="date">Created: 2018-02-09 Fri 16:36</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

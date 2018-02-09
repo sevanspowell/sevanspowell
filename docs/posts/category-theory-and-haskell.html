@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-09 Fri 16:31 -->
+<!-- 2018-02-09 Fri 16:36 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
@@ -61,13 +61,13 @@ for the JavaScript code in this tag.
 <div id="content">
 <h1 class="title">Samuel Evans-Powell</h1>
 <p>
-<a id="org142c29c"></a>
+<a id="org93c0677"></a>
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-org0e61dff" class="outline-2">
-<h2 id="org0e61dff">Haskell &amp; Category Theory</h2>
-<div class="outline-text-2" id="text-org0e61dff">
+<div id="outline-container-org2b5254b" class="outline-2">
+<h2 id="org2b5254b">Haskell &amp; Category Theory</h2>
+<div class="outline-text-2" id="text-org2b5254b">
 <p>
 <i>I've been learning about Haskell and Category Theory lately. In this</i>
 <i>series of posts I hope to collect my thoughts. Please pop me an email or open a</i>
@@ -76,9 +76,9 @@ for the JavaScript code in this tag.
 </p>
 </div>
 
-<div id="outline-container-org2835e70" class="outline-3">
-<h3 id="org2835e70">Abstraction</h3>
-<div class="outline-text-3" id="text-org2835e70">
+<div id="outline-container-orga8b38eb" class="outline-3">
+<h3 id="orga8b38eb">Abstraction</h3>
+<div class="outline-text-3" id="text-orga8b38eb">
 <p>
 Software developers do alot of abstraction. When we "abstract", we make a
 conscious decision to magnifiy the similarities between "things" and ignore
@@ -99,7 +99,7 @@ provide a solid foundation for us to build our programs on?
 
 <p>
 It turns out that we do: Category Theory. For a good definition of Category
-Theory see <a href="#orgfa159a5">1</a> and <a href="#orgfa159a5">2</a>, but essentially Category Theory is a field concerned
+Theory see <a href="#org58a460b">1</a> and <a href="#org58a460b">2</a>, but essentially Category Theory is a field concerned
 with structure, composition and identity. Category Theory provides a formal
 basis for abstractions like Monoid, Functor, Applicative and Monad. 
 </p>
@@ -114,7 +114,7 @@ encourages the creation of general and re-usable code: a much desired property.
 
 <p>
 Bartosz Milewski has a great series called <i>Category Theory for Programmers</i>
-<a href="#orgfa159a5">1</a> <a href="#orgfa159a5">2</a>, but I'm not knowledgeable enough to be so thorough, hopefully this
+<a href="#org58a460b">1</a> <a href="#org58a460b">2</a>, but I'm not knowledgeable enough to be so thorough, hopefully this
 series of articles will instead give you a practical but light understanding of
 Type Classes in Haskell, how they're useful to us, and their relationship with
 Category Theory.
@@ -122,9 +122,9 @@ Category Theory.
 </div>
 </div>
 
-<div id="outline-container-org5ae81b1" class="outline-3">
-<h3 id="org5ae81b1">Type classes</h3>
-<div class="outline-text-3" id="text-org5ae81b1">
+<div id="outline-container-org7212d6c" class="outline-3">
+<h3 id="org7212d6c">Type classes</h3>
+<div class="outline-text-3" id="text-org7212d6c">
 <p>
 Type classes can be thought of as Haskell's version of the interfaces in other
 languages. This is not strictly true, but is good enough to serve as our
@@ -139,17 +139,17 @@ in future, treat many different data types according to a common interface.
 </div>
 </div>
 
-<div id="outline-container-orgf92691c" class="outline-3">
-<h3 id="orgf92691c">Monoid</h3>
-<div class="outline-text-3" id="text-orgf92691c">
+<div id="outline-container-org18dfb1b" class="outline-3">
+<h3 id="org18dfb1b">Monoid</h3>
+<div class="outline-text-3" id="text-org18dfb1b">
 <p>
 One example of a type class from Category Theory is the Monoid type class (*):
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">class</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> a <span style="color: #3a81c3; font-weight: bold;">where</span>
-  mempty  <span style="color: #715ab1;">::</span> a
-  mappend <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> a <span style="color: #715ab1;">-&gt;</span> a
+<pre class="src src-haskell"><span style="color: #bf568b;">class</span> <span style="color: #8bbf56;">Monoid</span> a <span style="color: #bf568b;">where</span>
+  mempty  <span style="color: #bf8b56;">::</span> a
+  mappend <span style="color: #bf8b56;">::</span> a <span style="color: #bf8b56;">-&gt;</span> a <span style="color: #bf8b56;">-&gt;</span> a
 </pre>
 </div>
 
@@ -188,12 +188,12 @@ We can express this in Haskell by declaring Integer to be an instance of Monoid:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Monoid</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
-  mempty  <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
-  mempty <span style="color: #715ab1;">=</span> <span style="color: #4e3163;">1</span>
+<pre class="src src-haskell"><span style="color: #bf568b;">instance</span> <span style="color: #8bbf56;">Monoid</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf568b;">where</span>
+  mempty  <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span>
+  mempty <span style="color: #bf8b56;">=</span> <span style="color: #bfbf56;">1</span>
 
-  mappend <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
-  mappend <span style="color: #715ab1;">=</span> <span style="color: #3a81c3;">(</span><span style="color: #715ab1;">*</span><span style="color: #3a81c3;">)</span>
+  mappend <span style="color: #bf8b56;">::</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span> <span style="color: #bf8b56;">-&gt;</span> <span style="color: #8bbf56;">Integer</span>
+  mappend <span style="color: #bf8b56;">=</span> <span style="color: #bf568b;">(</span><span style="color: #bf8b56;">*</span><span style="color: #bf568b;">)</span>
 </pre>
 </div>
 
@@ -224,9 +224,9 @@ particular function is only making use of the equivalent of <code>mempty</code> 
 </div>
 </div>
 
-<div id="outline-container-orgcec0e21" class="outline-3">
-<h3 id="orgcec0e21">Notes</h3>
-<div class="outline-text-3" id="text-orgcec0e21">
+<div id="outline-container-org3fdbaf8" class="outline-3">
+<h3 id="org3fdbaf8">Notes</h3>
+<div class="outline-text-3" id="text-org3fdbaf8">
 <ul class="org-ul">
 <li>The Monoid type class has a third function (mconcat) but it can be derived
 from the first two functions (<a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/src/GHC.Base.html#line-226">source</a>).</li>
@@ -234,9 +234,9 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 </div>
 </div>
 
-<div id="outline-container-orgfa159a5" class="outline-3">
-<h3 id="orgfa159a5">References</h3>
-<div class="outline-text-3" id="text-orgfa159a5">
+<div id="outline-container-org58a460b" class="outline-3">
+<h3 id="org58a460b">References</h3>
+<div class="outline-text-3" id="text-org58a460b">
 <p>
 [1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: <a href="https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/">https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/</a>. [Accessed: 01- Feb- 2018].
 </p>
@@ -250,7 +250,7 @@ from the first two functions (<a href="https://hackage.haskell.org/package/base-
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-09 Fri 16:31</p>
+<p class="date">Created: 2018-02-09 Fri 16:36</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
