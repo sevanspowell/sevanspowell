@@ -1,0 +1,234 @@
+#+SETUPFILE: ../org-templates/posts.org
+#+MACRO: POST_TITLE Functor
+#+INCLUDE: ../org-templates/posts_short_header.org
+
+/I've been learning about Haskell and Category Theory lately. In this/
+/series of posts I hope to collect my thoughts. Please pop me an email or open a/
+/pull request [[https://github.com/sevanspowell/sevanspowell][here]] if you want to make any suggestions/corrections, I'm still/
+/learning myself./
+
+A data type that is an instance of Functor allows you to apply some function to
+values /within the context of/ that Functor (a list of Integers can be thought
+of as Integer values /within the context of/ a list). You're probably familiar
+with at least one instance of Functor: the List type in Haskell. The List type
+allows functions to be applied to values in the list using the ~map~ function:
+
+#+BEGIN_SRC haskell
+map :: (a -> b) -> [a] -> [b]
+#+END_SRC
+
+In Haskell, for a type to be a Functor instance, it must implement the ~fmap~
+function:
+
+#+BEGIN_aside
+Note that ~fmap~ is just a generalization of the ~map~ function, with the list
+being replaced by the type parameter ~f~.
+#+END_aside
+
+#+BEGIN_SRC haskell
+fmap :: (a -> b) -> f a -> f b
+#+END_SRC
+
+That's it! Just one function.
+
+The ~fmap~ function can be thought of as 'mapping' values of the type 'a' in the
+given functor (the domain) to values of the type 'b' in the same functor
+(codomain), where the given function ~(a -> b)~ performs that 'mapping'.
+
+A simple Functor instance for Lists might look like this:
+
+#+BEGIN_SRC haskell
+instance Functor (List) where
+  fmap :: (a -> b) -> [a] -> [b]
+  fmap _ []     = []
+  fmap f (x:xs) = f x : fmap xs
+#+END_SRC
+
+The supplied function is simply applied to each element in the list.
+
+The Haskell Maybe type is also an instance of Functor:
+
+#+BEGIN_SRC haskell
+instance Functor (Maybe) where
+  fmap :: (a -> b) -> Maybe a -> Maybe b
+  fmap _ Nothing  = Nothing
+  fmap f (Just a) = Just (f a)
+#+END_SRC
+
+Again, pretty simple: if the given Maybe has the value 'Nothing', return
+'Nothing', otherwise apply the function to the value present.
+
+Alright, how about something a bit more challenging:
+
+#+BEGIN_SRC haskell
+instance Functor ((->) e) where
+#+END_SRC
+
+The function type constructor can be an instance of Functor too!
+
+Yes, this can be very hard to wrap your head around. If you get lost here, don't
+worry! Come back to it later.
+
+** Kinds
+
+Let's start with an aside on /kinds/:
+
+Just as types are used to classify values, kinds are used to classify types.
+
+The kind of Bool is '\ast{}':
+
+#+BEGIN_SRC haskell
+:k Bool 
+Bool :: *
+#+END_SRC
+
+The kind of Integer is '\ast{}':
+
+#+BEGIN_SRC haskell
+:k Integer
+Integer :: *
+
+:k [Integer]
+[Integer] :: *
+#+END_SRC
+
+If something can be used as a value, it's type will have the kind '\ast{}'.
+
+#+BEGIN_SRC haskell
+:t True
+True :: Bool
+
+:k Bool
+Bool :: *
+#+END_SRC
+
+True is a value whose type (Bool) has the kind '\ast{}'.
+
+Type constructors on the other hand have the kind '(\ast{} -> \ast{})':
+
+#+BEGIN_SRC haskell
+:k []
+[] :: * -> *
+
+:k Maybe
+Maybe :: * -> *
+#+END_SRC
+
+They take something of kind '\ast{}' (Such as Integer, [Integer], Bool, Maybe
+Integer, etc.) and produce something of kind '\ast{}'. That is, it takes a value
+type and produces a new value type.
+
+The Maybe type takes any type of kind '\ast{}' and produces a value of a type whose
+kind is '\ast{}':
+
+#+BEGIN_SRC haskell
+:k Maybe
+Maybe :: * -> *
+
+:k Int
+Int :: *
+
+:k Maybe Int
+Maybe Int :: *
+#+END_SRC
+
+The function type constructor takes two things of kind '\ast{}' and produces something
+of kind '\ast{}':
+
+#+BEGIN_SRC haskell
+:k (->)
+(->) :: * -> * -> *
+
+:k ((->) Integer)
+((->) Integer) :: * -> *
+
+:k ((->) Integer Bool)
+((->) Integer Bool) :: *
+
+-- Rewritten with (->) infix:
+:k (Integer -> Bool)
+(Integer -> Bool) :: *
+#+END_SRC
+
+#+BEGIN_aside
+Oh look, functions have the same kind as any other values!
+#+END_aside
+
+Now, let's look at the kind of Functor.
+
+#+BEGIN_SRC haskell
+$ :k Functor
+Functor :: (* -> *) -> Constraint
+#+END_SRC
+
+We can see that Functor takes something of kind '(\ast{} -> \ast{})' (i.e. a type
+constructor) and produces a Constraint. We won't look at constraints now, but
+the name should give you a sufficient idea of what they do.
+
+It makes sense that we can create a Functor instance of Maybe because the
+kind of Maybe matches:
+
+#+BEGIN_SRC haskell
+:k Maybe
+Maybe :: * -> *
+
+instance Functor Maybe where
+-- ...
+#+END_SRC
+
+But, notice that the kind of ~((->) e)~ (where ~e~ is any type) also matches:
+
+#+BEGIN_SRC haskell
+:k ((->) Integer)
+((->) Integer) :: * -> *
+#+END_SRC
+
+Therefore, we can make Functor instances of ~((->) e)~, i.e. the function type
+constructor with one argument applied.
+
+To make such an instance, we need an implementation of the ~fmap~ function:
+
+#+BEGIN_SRC haskell
+fmap :: (a -> b) -> f a -> f b
+#+END_SRC
+
+Let's substitute ~f~ for our function type constructor, ~((->) e)~:
+
+#+BEGIN_SRC haskell
+fmap :: (a -> b) -> ((->) e a) -> ((->) e b)
+#+END_SRC
+
+And writing ~(->)~ infix:
+
+#+BEGIN_SRC haskell
+fmap :: (a -> b) -> (e -> a) -> (e -> b)
+#+END_SRC
+
+Now that we have the type, let's try our hand at writing it (just match the
+types!):
+
+#+BEGIN_SRC haskell
+fmap :: (a -> b) -> (e -> a) -> (e -> b)
+fmap f g = f . g
+#+END_SRC
+
+(Convince yourself that this works). Hmm, this is just function composition and
+so can be re-written pointfree as:
+
+#+BEGIN_SRC haskell
+instance Functor ((->) e) where
+  fmap :: (a -> b) -> (e -> a) -> (e -> b)
+  fmap = (.)
+#+END_SRC
+
+Phew, our Functor instance for the function type constructor. Essentially this
+allows us to apply a function to the resulting value of another function
+(function composition).
+
+I hope this also demonstrates the power of 'following the types' of functions
+(and kinds of types) when trying to understand functional programs. Do this
+often!
+
+** References
+
+[1] B. Yorgey, "Functors", http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html, 2013. [Online]. Available: http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html. [Accessed: 01- Feb- 2018].

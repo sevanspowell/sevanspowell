@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-02-09 Fri 16:45 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title></title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Samuel Evans-Powell" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2017 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org49ceda6">Functor</a>
+<ul>
+<li><a href="#org336263d">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org49ceda6" class="outline-2">
+<h2 id="org49ceda6">Functor</h2>
+<div class="outline-text-2" id="text-org49ceda6">
+<p>
+A <b>Functor</b> allows you to apply some function to values <i>within the context of</i>
+that <b>Functor</b> (A List of Integers can be thought of as Integer values <i>within
+the context of</i> a List). You're probably familiar with at least one instance of
+<b>Functor</b>: the List type in Haskell. The List type allows functions to be
+applied to values in the list using the <code>map</code> function:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">map</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>a<span style="color: #3a81c3;">]</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>b<span style="color: #3a81c3;">]</span>
+</pre>
+</div>
+
+<p>
+In Haskell, for a type to be a <b>Functor</b> instance, it must implement the <code>fmap</code>
+function:
+</p>
+
+<div class="aside">
+<p>
+Note that <code>fmap</code> is just a generalization of the <code>map</code> function, with the list
+being replaced by the type parameter <code>f</code>.
+</p>
+
+</div>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
+</pre>
+</div>
+
+<p>
+That's it! Just one function.
+</p>
+
+<p>
+As the function signature suggests, the result of <code>fmap</code> is a functor with
+values of the same type as the return type of the given function. The <code>fmap</code>
+function can be thought of as 'mapping' values of the type 'a' in the given
+functor (the domain) to values of the type 'b' in the same functor (codomain),
+where the given function <code>(a -&gt; b)</code> performs that 'mapping'.
+</p>
+
+<p>
+A simple Functor instance for Lists might look like this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">List</span><span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>a<span style="color: #3a81c3;">]</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>b<span style="color: #3a81c3;">]</span>
+  fmap <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #3a81c3; font-weight: bold;">[]</span>     <span style="color: #715ab1;">=</span> <span style="color: #3a81c3; font-weight: bold;">[]</span>
+  fmap f <span style="color: #3a81c3;">(</span>x<span style="color: #ba2f59; font-weight: bold;">:</span>xs<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">=</span> f x <span style="color: #ba2f59; font-weight: bold;">:</span> fmap xs
+</pre>
+</div>
+
+<p>
+The supplied function is simply applied to each element in the list.
+</p>
+
+<p>
+The Haskell <b>Maybe</b> type is also an instance of <b>Functor</b>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">Maybe</span><span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> a <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> b
+  fmap <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>  <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>
+  fmap f <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">Just</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Just</span> <span style="color: #3a81c3;">(</span>f a<span style="color: #3a81c3;">)</span>
+</pre>
+</div>
+
+<p>
+Again, pretty simple, if the given <b>Maybe</b> has the value 'Nothing', return
+'Nothing', otherwise apply the function to the value present.
+</p>
+
+<p>
+Alright, how about something a bit more challenging:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e<span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+</pre>
+</div>
+
+<p>
+The function type constructor can be an instance of <b>Functor</b> too! 
+</p>
+
+<p>
+Yes, this can be very hard to wrap your head around. If you get lost here, don't
+worry! Come back to it later.
+</p>
+
+<p>
+Let's start with an aside on <i>kinds</i>:
+</p>
+
+<p>
+Just as types are used to classify values, kinds are used to classify types.
+</p>
+
+<p>
+The kind of Bool is:
+</p>
+
+<p>
+:k Bool 
+Bool :: *
+</p>
+
+<p>
+The kind of Integer is:
+</p>
+
+<p>
+:k Integer
+Integer :: *
+</p>
+
+<p>
+:k [Integer]
+[Integer] :: *
+</p>
+
+<p>
+If something can be used as a value, it's type will have the kind *.
+</p>
+
+<p>
+:t True
+True :: Bool
+</p>
+
+<p>
+:k Bool
+Bool :: *
+</p>
+
+<p>
+Type constructors on the other hand have the kind (* -&gt; *):
+</p>
+
+<p>
+:k []
+[] :: * -&gt; *
+</p>
+
+<p>
+:k Maybe
+Maybe :: * -&gt; *
+</p>
+
+<p>
+They take something of kind * (Such as Integer, [Integer], Bool, Maybe Integer,
+etc.) and produce something of kind *. That is it takes two value types and
+produces a new value type.
+</p>
+
+<p>
+E.g.
+</p>
+
+<p>
+:k Maybe Int
+Maybe Int :: *
+</p>
+
+<p>
+:k [Int]
+[Int] :: *
+</p>
+
+<p>
+Even further, the function type constructor takes two things of kind * and
+produces something of kind *:
+</p>
+
+<p>
+:k (-&gt;)
+(-&gt;) :: * -&gt; * -&gt; *
+</p>
+
+<p>
+:k ((-&gt;) Integer)
+((-&gt;) Integer) :: * -&gt; *
+</p>
+
+<p>
+:k ((-&gt;) Integer Bool)
+((-&gt;) Integer Bool) :: *
+</p>
+
+<p>
+:k (Integer -&gt; Bool)
+(Integer -&gt; Bool) :: *
+</p>
+
+<div class="aside">
+<p>
+Oh look, functions have the same kind as any other values!
+</p>
+
+</div>
+
+<p>
+Now, let's look at the kind of <b>Functor</b>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-txt">$ :k Functor
+Functor :: (* -&gt; *) -&gt; Constraint
+</pre>
+</div>
+
+<p>
+We can see that <b>Functor</b> takes something of kind (* -&gt; *) (i.e. a type
+constructor) and produces a Constraint. We won't look at constraints now, but
+the name should give you a good idea of what it does.
+</p>
+
+<p>
+It makes sense that we can create a <b>Functor</b> instance of <b>Maybe</b> because the
+kind of <b>Maybe</b> matches:
+</p>
+
+<p>
+:k Maybe
+Maybe :: * -&gt; *
+</p>
+
+<p>
+But, notice that the kind of ((-&gt;) e) (where e is any type) also matches:
+</p>
+
+<p>
+:k ((-&gt;) Integer)
+((-&gt;) Integer) :: * -&gt; *
+</p>
+
+<p>
+Therefore, we can make <b>Functor</b> instances of ((-&gt;) e).
+</p>
+
+<p>
+To make such an instance, we need an implementation of the <code>fmap</code> function:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
+</pre>
+</div>
+
+<p>
+Let's substitute <code>f</code> for our function type constructor, <code>((-&gt;) e)</code>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e b<span style="color: #3a81c3;">)</span>
+</pre>
+</div>
+
+<p>
+And writing <code>(-&gt;)</code> infix:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
+</pre>
+</div>
+
+<p>
+Now that we have the type, let's try our hand at writing it (just match the
+types!):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
+<span style="color: #6c3163; font-weight: bold;">fmap</span> f g <span style="color: #715ab1;">=</span> f <span style="color: #715ab1;">.</span> g
+</pre>
+</div>
+
+<p>
+(Convince yourself that this works). Hmm, this is just function composition and
+so can be re-written pointfree as:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e<span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
+  fmap <span style="color: #715ab1;">=</span> <span style="color: #3a81c3;">(</span><span style="color: #715ab1;">.</span><span style="color: #3a81c3;">)</span>
+</pre>
+</div>
+
+<p>
+Phew, our <b>Functor</b> instance for the function type constructor. Essentially this
+allows us to apply a function to the return value of another function. That
+return value can be thought of as being <i>in the context of</i> that function
+(matching our initial intuition of *Functor*s).
+</p>
+
+<p>
+I hope this also demonstrates the power of 'following the types' of
+functions (and kinds of types) when trying to understand functional programs.
+</p>
+</div>
+
+<div id="outline-container-org336263d" class="outline-3">
+<h3 id="org336263d">References</h3>
+<div class="outline-text-3" id="text-org336263d">
+<p>
+<a href="http://www.seas.upenn.edu/~cis194/spring13/lectures/09-functors.html">http://www.seas.upenn.edu/~cis194/spring13/lectures/09-functors.html</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-02-09 Fri 16:45</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
