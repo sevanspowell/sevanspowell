@@ -1,0 +1,276 @@
+#+SETUPFILE: ../org-templates/posts.org
+#+MACRO: POST_TITLE Applicative
+#+INCLUDE: ../org-templates/posts_header.org
+
+/I've been learning about Haskell and Category Theory lately. In this/
+/series of posts I hope to collect my thoughts. Please pop me an email or open a/
+/pull request [[https://github.com/sevanspowell/sevanspowell][here]] if you want to make any suggestions/corrections, I'm still/
+/learning myself./
+
+In my last post, I talked about how a Functor allows you to apply a function
+to values within the context of that Functor. In Haskell, this is implemented
+by the ~fmap~ function:
+
+#+BEGIN_SRC haskell
+fmap :: Functor f => (a -> b) -> f a -> f b
+#+END_SRC
+
+An Applicative Functor is not all that different from a Functor, it still deals
+with the application of a function to values within the context of a Functor,
+but where that function /is itself/ in the context of a Functor. 
+
+The minimal Applicative typeclass is defined as follows:
+
+#+BEGIN_SRC haskell
+class Functor f => Applicative f where
+    pure :: a -> f a
+
+    (<*>) :: f (a -> b) -> f a -> f b
+#+END_SRC
+
+As you can see, any data type that is an instance of Applicative must also be an
+instance of Functor.
+
+** Motivating Example
+
+Alright, where are Applicative Functors useful though?
+
+Let's say we have the following data type:
+
+#+BEGIN_SRC haskell
+data Address = Address { streetName :: String
+                       , streetNum :: Integer
+                       , isApartment :: Bool }
+#+END_SRC
+
+To construct an address, we need three things: a String value, an Integer value
+and a Bool value. The constructing function has the following signature:
+
+#+BEGIN_SRC haskell
+Address :: String -> Integer -> Bool -> Address
+#+END_SRC
+
+Now, let's suppose we're parsing these addresses from some address book in a
+text file and we have the following functions to retrieve the street name, street
+number and apartment bool from the file:
+
+#+BEGIN_SRC haskell
+parseStreetName  :: File -> Maybe String
+parseStreetNum   :: File -> Maybe Integer
+parseIsApartment :: File -> Maybe Bool
+#+END_SRC
+
+Great! So we go ahead and try and parse our address:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Address
+parseAddress file = Address (parseStreetName file) (parseStreetNum file) (parseIsApartment file)
+#+END_SRC
+
+Oh no! That doesn't work, the ~parse~ functions return a Maybe type but the
+~Address~ constructor function doesn't take Maybe types. The types don't line
+up!
+
+To solve this we could manually inspect the results of each parse function and
+return a Maybe Address:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Maybe Address
+parseAddress file = maybeAddress (parseStreetName file) (parseStreetNum file) (parseIsApartment file)
+  where
+    maybeAddress :: Maybe String -> Maybe Integer -> Maybe Bool -> Maybe Address
+    maybeAddress Nothing _ _ = Nothing
+    maybeAddress _ Nothing _ = Nothing
+    maybeAddress _ _ Nothing = Nothing
+    maybeAddress street num apartment = Just (Address street num apartment)
+#+END_SRC
+
+That's certainly closer to what we want, but it's a little cumbersome to inspect
+the results of the Maybe each time, surely there's a better way to do this.
+
+Turns out, Applicative Functors can help us here:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Maybe Address
+parseAddress file = Address <$> parseStreetName file <*> parseStreetNum file <*> parseIsApartment file
+#+END_SRC
+
+Wow, that was easy! Let's take a moment to step through what's happening here:
+
+According to precedence rules, the above statement happens in the following
+order:
+
+#+BEGIN_SRC haskell
+(((Address <$> parseStreetName file) <*> parseStreetNum file) <*> parseIsApartment file)
+#+END_SRC
+
+** <$> (fmap)
+
+Starting from the start:
+
+#+BEGIN_SRC haskell
+:: (String -> Integer -> Bool -> Address) -> Maybe String -> Maybe (Integer -> Bool -> Address)
+(Address <$> parseStreetName file) :: Maybe (Integer -> Bool -> Address)
+#+END_SRC
+
+The Applicative type class necessitates that it's instances also be instances
+of the Functor type class. So, Applicative instances can also use ~fmap~.
+
+All we're doing is 'mapping' the ~Address~ function over the ~Maybe String~.
+Because Maybe is an instance of Functor, it provides the ~fmap~ function
+that allows us to do that. However, because not all the arguments of the Address
+function are applied, we're left with:
+
+#+BEGIN_SRC haskell
+Maybe (Integer -> Bool -> Address)
+#+END_SRC
+
+We'd really like to just use the ~fmap~ function again to map this over the rest
+of the results. However now the function itself is in the context of a Maybe
+and so the ~fmap~ function is no longer useful. Fortunately, this is exactly
+where Applicative Functors come in handy!
+
+** <*> (apply)
+
+Remember I said Applicative Functors let us apply functions which are themselves
+in the context of a Functor to values which are also in the context of a
+Functor? This behaviour is provided by our ~(<*>)~ operator:
+
+#+BEGIN_SRC haskell
+(<*>) :: (Applicative f) => f (a -> b) -> f a -> f b
+#+END_SRC
+
+How will this help us? We had this:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Maybe Address
+parseAddress file = Address <$> parseStreetName file <*> parseStreetNum file <*> parseIsApartment file
+#+END_SRC
+
+But we've already resolved the first part:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Maybe Address
+parseAddress file = Maybe (Integer -> Bool -> Address) <*> parseStreetNum file <*> parseIsApartment file
+#+END_SRC
+
+Now we need to resolve the next part:
+
+#+BEGIN_SRC haskell
+Maybe (Integer -> Bool -> Address) <*> parseStreetNum file 
+#+END_SRC
+
+So the signature of the function we're looking for is:
+
+#+BEGIN_SRC haskell
+Maybe (Integer -> Bool -> Address) -> Maybe Integer -> Maybe (Bool -> Address)
+#+END_SRC
+
+In other words, it's applying the next argument of our Address constructor.
+
+Starting with the definition of ~(<*>)~:
+
+#+BEGIN_SRC haskell
+(<*>) :: (Applicative f) => f (a -> b) -> f a -> f b
+#+END_SRC
+
+Let's try and match this signature to the signature we require. We'll start by
+making the ~f~ a Maybe:
+
+#+BEGIN_SRC haskell
+(<*>) ::  Maybe (a -> b) -> Maybe a -> Maybe b
+#+END_SRC
+
+And make ~a~ an Integer:
+
+#+BEGIN_SRC haskell
+(<*>) ::  Maybe (Integer -> b) -> Maybe Integer -> Maybe b
+#+END_SRC
+
+And ~b~ a ~(Bool -> Address)~:
+
+#+BEGIN_SRC haskell
+(<*>) ::  Maybe (Integer -> Bool -> Address) -> Maybe Integer -> Maybe (Bool -> Address)
+#+END_SRC
+
+Sweet! Turns out the result of our ~apply~ operator will allow us to apply the
+next argument of the function to a value within a Maybe context:
+
+#+BEGIN_SRC haskell
+:: Maybe (Integer -> Bool -> Address) -> Maybe Integer -> Maybe (Bool -> Address)
+((Address <$> parseStreetName file) <*> parseStreetNum file) :: Maybe (Bool -> Address)
+#+END_SRC
+
+Now all we need to do is use the apply operator again to get our final result:
+
+#+BEGIN_SRC haskell
+(<*>) ::  Maybe (Bool -> Address) -> Maybe Bool -> Maybe Address
+#+END_SRC
+
+#+BEGIN_SRC haskell
+:: Maybe (Bool -> Address) -> Maybe Bool -> Maybe Address
+(((Address <$> parseStreetName file) <*> parseStreetNum file) <*> parseIsApartment file) :: Maybe Address
+#+END_SRC
+
+It takes a little to understand, but the code that uses Applictive Functors is
+much less verbose. We use the properties of the Applicative to take care of
+feeding possible failure from one function application to another. If all parse
+functions succeed, a Just Address is returned. If any one fails, Nothing is
+returned.
+
+** pure
+
+An Applicative instance must also implement the function 'pure':
+
+#+BEGIN_SRC haskell
+pure :: a -> f a
+#+END_SRC
+
+All pure does is 'lift' a value into the context of an Applicative.
+
+For example:
+
+#+BEGIN_SRC haskell
+pure :: a -> Maybe a
+pure x = Just x
+#+END_SRC
+
+#+BEGIN_SRC haskell
+pure :: a -> [a]
+pure x = [x]
+#+END_SRC 
+
+Where is this useful? When using an Applicative instance, you may come across
+situations where you wish to apply a function within a Functor context to a
+value which is not in that Functor.
+
+For example, you may wish to apply a list of functions to a single value,
+producing a new list of values, one element for the result of each function
+being applied to the value:
+
+#+BEGIN_SRC haskell
+myFunc :: [(a -> b)] -> a -> [b]
+#+END_SRC
+
+The ~pure~ function allows you to 'lift' a value into the context of a *Functor*
+(in this case a list):
+
+#+BEGIN_SRC haskell
+myFunc :: [(a -> b)] -> a -> [b]
+myFunc fs a = fs <*> pure a
+#+END_SRC
+
+You may also wish to lift a function into the context of a Functor. We did this
+in the Address examples using the ~(<$>)~ (fmap) operator, but it could also be
+achieved using pure:
+
+#+BEGIN_SRC haskell
+parseAddress :: File -> Maybe Address
+parseAddress file = pure Address <*> parseStreetName file <*> parseStreetNum file <*> parseIsApartment file
+#+END_SRC
+
+** References
+
+http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/10-applicative.html
+http://wiki.ifs.hsr.ch/SemProgAnTr/files/ApplicativeFunctorsInHaskell.pdf
+https://stackoverflow.com/questions/3242361/haskell-how-is-pronounced
