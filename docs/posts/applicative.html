@@ -3,18 +3,18 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-09 Fri 16:45 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title></title>
-<meta name="generator" content="Org mode" />
-<meta name="author" content="Samuel Evans-Powell" />
+<title>Samuel Evans-Powell</title>
+<!-- 2018-03-16 Fri 16:35 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -58,333 +58,457 @@ for the JavaScript code in this tag.
 </head>
 <body>
 <div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="top" name="top"></a>
+<a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Applicative</h2>
+<div class="outline-text-2" id="text-1">
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org49ceda6">Functor</a>
+<li><a href="#sec-1">Applicative</a>
 <ul>
-<li><a href="#org336263d">References</a></li>
+<li><a href="#sec-1-1">Motivating Example</a></li>
+<li><a href="#sec-1-2">&lt;$&gt; (fmap)</a></li>
+<li><a href="#sec-1-3">&lt;*&gt; (apply)</a></li>
+<li><a href="#sec-1-4">pure</a></li>
+<li><a href="#sec-1-5">References</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org49ceda6" class="outline-2">
-<h2 id="org49ceda6">Functor</h2>
-<div class="outline-text-2" id="text-org49ceda6">
+
 <p>
-A <b>Functor</b> allows you to apply some function to values <i>within the context of</i>
-that <b>Functor</b> (A List of Integers can be thought of as Integer values <i>within
-the context of</i> a List). You're probably familiar with at least one instance of
-<b>Functor</b>: the List type in Haskell. The List type allows functions to be
-applied to values in the list using the <code>map</code> function:
+<i>I've been learning about Haskell and Category Theory lately. In this</i>
+<i>series of posts I hope to collect my thoughts. Please pop me an email or open a</i>
+<i>pull request <a href="https://github.com/sevanspowell/sevanspowell">here</a> if you want to make any suggestions/corrections, I'm still</i>
+<i>learning myself.</i>
+</p>
+
+<p>
+In my last post, I talked about how a Functor allows you to apply a function
+to values within the context of that Functor. In Haskell, this is implemented
+by the <code>fmap</code> function:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">map</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>a<span style="color: #3a81c3;">]</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>b<span style="color: #3a81c3;">]</span>
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> f <span style="color: #715ab1;">=&gt;</span> (a <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
 </pre>
 </div>
 
 <p>
-In Haskell, for a type to be a <b>Functor</b> instance, it must implement the <code>fmap</code>
-function:
+An Applicative Functor is not all that different from a Functor, it still deals
+with the application of a function to values within the context of a Functor,
+but where that function <i>is itself</i> in the context of a Functor. 
 </p>
 
-<div class="aside">
 <p>
-Note that <code>fmap</code> is just a generalization of the <code>map</code> function, with the list
-being replaced by the type parameter <code>f</code>.
+The minimal Applicative typeclass is defined as follows:
 </p>
-
-</div>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
+
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">class</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> f <span style="color: #715ab1;">=&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Applicative</span> f <span style="color: #3a81c3; font-weight: bold;">where</span>
+    pure <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> f a
+
+    (<span style="color: #715ab1;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span> f (a <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
 </pre>
 </div>
 
 <p>
-That's it! Just one function.
+As you can see, any data type that is an instance of Applicative must also be an
+instance of Functor.
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Motivating Example</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Alright, where are Applicative Functors useful though?
 </p>
 
 <p>
-As the function signature suggests, the result of <code>fmap</code> is a functor with
-values of the same type as the return type of the given function. The <code>fmap</code>
-function can be thought of as 'mapping' values of the type 'a' in the given
-functor (the domain) to values of the type 'b' in the same functor (codomain),
-where the given function <code>(a -&gt; b)</code> performs that 'mapping'.
-</p>
-
-<p>
-A simple Functor instance for Lists might look like this:
+Let's say we have the following data type:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">List</span><span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
-  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>a<span style="color: #3a81c3;">]</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">[</span>b<span style="color: #3a81c3;">]</span>
-  fmap <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #3a81c3; font-weight: bold;">[]</span>     <span style="color: #715ab1;">=</span> <span style="color: #3a81c3; font-weight: bold;">[]</span>
-  fmap f <span style="color: #3a81c3;">(</span>x<span style="color: #ba2f59; font-weight: bold;">:</span>xs<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">=</span> f x <span style="color: #ba2f59; font-weight: bold;">:</span> fmap xs
+
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">data</span> <span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Address</span> { streetName <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">String</span>
+                       , streetNum <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+                       , isApartment <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> }
 </pre>
 </div>
 
 <p>
-The supplied function is simply applied to each element in the list.
-</p>
-
-<p>
-The Haskell <b>Maybe</b> type is also an instance of <b>Functor</b>:
+To construct an address, we need three things: a String value, an Integer value
+and a Bool value. The constructing function has the following signature:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">Maybe</span><span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
-  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> a <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> b
-  fmap <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>  <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>
-  fmap f <span style="color: #3a81c3;">(</span><span style="color: #ba2f59; font-weight: bold;">Just</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Just</span> <span style="color: #3a81c3;">(</span>f a<span style="color: #3a81c3;">)</span>
+
+<pre class="src src-haskell"><span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">String</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
 </pre>
 </div>
 
 <p>
-Again, pretty simple, if the given <b>Maybe</b> has the value 'Nothing', return
-'Nothing', otherwise apply the function to the value present.
-</p>
-
-<p>
-Alright, how about something a bit more challenging:
+Now, let's suppose we're parsing these addresses from some address book in a
+text file and we have the following functions to retrieve the street name, street
+number and apartment bool from the file:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e<span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseStreetName</span>  <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">String</span>
+<span style="color: #6c3163; font-weight: bold;">parseStreetNum</span>   <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span>
+<span style="color: #6c3163; font-weight: bold;">parseIsApartment</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span>
 </pre>
 </div>
 
 <p>
-The function type constructor can be an instance of <b>Functor</b> too! 
-</p>
-
-<p>
-Yes, this can be very hard to wrap your head around. If you get lost here, don't
-worry! Come back to it later.
-</p>
-
-<p>
-Let's start with an aside on <i>kinds</i>:
-</p>
-
-<p>
-Just as types are used to classify values, kinds are used to classify types.
-</p>
-
-<p>
-The kind of Bool is:
-</p>
-
-<p>
-:k Bool 
-Bool :: *
-</p>
-
-<p>
-The kind of Integer is:
-</p>
-
-<p>
-:k Integer
-Integer :: *
-</p>
-
-<p>
-:k [Integer]
-[Integer] :: *
-</p>
-
-<p>
-If something can be used as a value, it's type will have the kind *.
-</p>
-
-<p>
-:t True
-True :: Bool
-</p>
-
-<p>
-:k Bool
-Bool :: *
-</p>
-
-<p>
-Type constructors on the other hand have the kind (* -&gt; *):
-</p>
-
-<p>
-:k []
-[] :: * -&gt; *
-</p>
-
-<p>
-:k Maybe
-Maybe :: * -&gt; *
-</p>
-
-<p>
-They take something of kind * (Such as Integer, [Integer], Bool, Maybe Integer,
-etc.) and produce something of kind *. That is it takes two value types and
-produces a new value type.
-</p>
-
-<p>
-E.g.
-</p>
-
-<p>
-:k Maybe Int
-Maybe Int :: *
-</p>
-
-<p>
-:k [Int]
-[Int] :: *
-</p>
-
-<p>
-Even further, the function type constructor takes two things of kind * and
-produces something of kind *:
-</p>
-
-<p>
-:k (-&gt;)
-(-&gt;) :: * -&gt; * -&gt; *
-</p>
-
-<p>
-:k ((-&gt;) Integer)
-((-&gt;) Integer) :: * -&gt; *
-</p>
-
-<p>
-:k ((-&gt;) Integer Bool)
-((-&gt;) Integer Bool) :: *
-</p>
-
-<p>
-:k (Integer -&gt; Bool)
-(Integer -&gt; Bool) :: *
-</p>
-
-<div class="aside">
-<p>
-Oh look, functions have the same kind as any other values!
-</p>
-
-</div>
-
-<p>
-Now, let's look at the kind of <b>Functor</b>.
+Great! So we go ahead and try and parse our address:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-txt">$ :k Functor
-Functor :: (* -&gt; *) -&gt; Constraint
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Address</span> (parseStreetName file) (parseStreetNum file) (parseIsApartment file)
 </pre>
 </div>
 
 <p>
-We can see that <b>Functor</b> takes something of kind (* -&gt; *) (i.e. a type
-constructor) and produces a Constraint. We won't look at constraints now, but
-the name should give you a good idea of what it does.
+Oh no! That doesn't work, the <code>parse</code> functions return a Maybe type but the
+<code>Address</code> constructor function doesn't take Maybe types. The types don't line
+up!
 </p>
 
 <p>
-It makes sense that we can create a <b>Functor</b> instance of <b>Maybe</b> because the
-kind of <b>Maybe</b> matches:
-</p>
-
-<p>
-:k Maybe
-Maybe :: * -&gt; *
-</p>
-
-<p>
-But, notice that the kind of ((-&gt;) e) (where e is any type) also matches:
-</p>
-
-<p>
-:k ((-&gt;) Integer)
-((-&gt;) Integer) :: * -&gt; *
-</p>
-
-<p>
-Therefore, we can make <b>Functor</b> instances of ((-&gt;) e).
-</p>
-
-<p>
-To make such an instance, we need an implementation of the <code>fmap</code> function:
+To solve this we could manually inspect the results of each parse function and
+return a Maybe Address:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> maybeAddress (parseStreetName file) (parseStreetNum file) (parseIsApartment file)
+  <span style="color: #3a81c3; font-weight: bold;">where</span>
+    maybeAddress <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">String</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+    maybeAddress <span style="color: #ba2f59; font-weight: bold;">Nothing</span> <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>
+    maybeAddress <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span> <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>
+    maybeAddress <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #3a81c3; font-weight: bold;">_</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Nothing</span>
+    maybeAddress street num apartment <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Just</span> (<span style="color: #ba2f59; font-weight: bold;">Address</span> street num apartment)
 </pre>
 </div>
 
 <p>
-Let's substitute <code>f</code> for our function type constructor, <code>((-&gt;) e)</code>:
+That's certainly closer to what we want, but it's a little cumbersome to inspect
+the results of the Maybe each time, surely there's a better way to do this.
+</p>
+
+<p>
+Turns out, Applicative Functors can help us here:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e b<span style="color: #3a81c3;">)</span>
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file
 </pre>
 </div>
 
 <p>
-And writing <code>(-&gt;)</code> infix:
+Wow, that was easy! Let's take a moment to step through what's happening here:
+</p>
+
+<p>
+According to precedence rules, the above statement happens in the following
+order:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
+
+<pre class="src src-haskell">(((<span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file) <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file) <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">&lt;$&gt; (fmap)</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Starting from the start:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #715ab1;">::</span> (<span style="color: #ba2f59; font-weight: bold;">String</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">String</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
+(<span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file) <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
 </pre>
 </div>
 
 <p>
-Now that we have the type, let's try our hand at writing it (just match the
-types!):
+The Applicative type class necessitates that it's instances also be instances
+of the Functor type class. So, Applicative instances can also use <code>fmap</code>.
+</p>
+
+<p>
+All we're doing is 'mapping' the <code>Address</code> function over the <code>Maybe String</code>.
+Because Maybe is an instance of Functor, it provides the <code>fmap</code> function
+that allows us to do that. However, because not all the arguments of the Address
+function are applied, we're left with:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">fmap</span> <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
-<span style="color: #6c3163; font-weight: bold;">fmap</span> f g <span style="color: #715ab1;">=</span> f <span style="color: #715ab1;">.</span> g
+
+<pre class="src src-haskell"><span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
 </pre>
 </div>
 
 <p>
-(Convince yourself that this works). Hmm, this is just function composition and
-so can be re-written pointfree as:
+We'd really like to just use the <code>fmap</code> function again to map this over the rest
+of the results. However now the function itself is in the context of a Maybe
+and so the <code>fmap</code> function is no longer useful. Fortunately, this is exactly
+where Applicative Functors come in handy!
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">&lt;*&gt; (apply)</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+Remember I said Applicative Functors let us apply functions which are themselves
+in the context of a Functor to values which are also in the context of a
+Functor? This behaviour is provided by our <code>(&lt;*&gt;)</code> operator:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">instance</span> <span style="color: #ba2f59; font-weight: bold;">Functor</span> <span style="color: #3a81c3;">(</span><span style="color: #6c3163; font-weight: bold;">(</span><span style="color: #ba2f59; font-weight: bold;">-&gt;</span><span style="color: #6c3163; font-weight: bold;">)</span> e<span style="color: #3a81c3;">)</span> <span style="color: #3a81c3; font-weight: bold;">where</span>
-  fmap <span style="color: #715ab1;">::</span> <span style="color: #3a81c3;">(</span>a <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> a<span style="color: #3a81c3;">)</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #3a81c3;">(</span>e <span style="color: #715ab1;">-&gt;</span> b<span style="color: #3a81c3;">)</span>
-  fmap <span style="color: #715ab1;">=</span> <span style="color: #3a81c3;">(</span><span style="color: #715ab1;">.</span><span style="color: #3a81c3;">)</span>
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span> (<span style="color: #ba2f59; font-weight: bold;">Applicative</span> f) <span style="color: #715ab1;">=&gt;</span> f (a <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
 </pre>
 </div>
 
 <p>
-Phew, our <b>Functor</b> instance for the function type constructor. Essentially this
-allows us to apply a function to the return value of another function. That
-return value can be thought of as being <i>in the context of</i> that function
-(matching our initial intuition of *Functor*s).
+How will this help us? We had this:
 </p>
 
-<p>
-I hope this also demonstrates the power of 'following the types' of
-functions (and kinds of types) when trying to understand functional programs.
-</p>
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file
+</pre>
 </div>
 
-<div id="outline-container-org336263d" class="outline-3">
-<h3 id="org336263d">References</h3>
-<div class="outline-text-3" id="text-org336263d">
 <p>
-<a href="http://www.seas.upenn.edu/~cis194/spring13/lectures/09-functors.html">http://www.seas.upenn.edu/~cis194/spring13/lectures/09-functors.html</a>
+But we've already resolved the first part:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file
+</pre>
+</div>
+
+<p>
+Now we need to resolve the next part:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file
+</pre>
+</div>
+
+<p>
+So the signature of the function we're looking for is:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
+</pre>
+</div>
+
+<p>
+In other words, it's applying the next argument of our Address constructor.
+</p>
+
+<p>
+Starting with the definition of <code>(&lt;*&gt;)</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span> (<span style="color: #ba2f59; font-weight: bold;">Applicative</span> f) <span style="color: #715ab1;">=&gt;</span> f (a <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> f a <span style="color: #715ab1;">-&gt;</span> f b
+</pre>
+</div>
+
+<p>
+Let's try and match this signature to the signature we require. We'll start by
+making the <code>f</code> a Maybe:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span>  <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (a <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> a <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> b
+</pre>
+</div>
+
+<p>
+And make <code>a</code> an Integer:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span>  <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> b) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> b
+</pre>
+</div>
+
+<p>
+And <code>b</code> a <code>(Bool -&gt; Address)</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span>  <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
+</pre>
+</div>
+
+<p>
+Sweet! Turns out the result of our <code>apply</code> operator will allow us to apply the
+next argument of the function to a value within a Maybe context:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Integer</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
+((<span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file) <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file) <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>)
+</pre>
+</div>
+
+<p>
+Now all we need to do is use the apply operator again to get our final result:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell">(<span style="color: #6c3163; font-weight: bold;">&lt;*&gt;</span>) <span style="color: #715ab1;">::</span>  <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>) <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+(((<span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;$&gt;</span> parseStreetName file) <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file) <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file) <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+</pre>
+</div>
+
+<p>
+It takes a little to understand, but the code that uses Applictive Functors is
+much less verbose. We use the properties of the Applicative to take care of
+feeding possible failure from one function application to another. If all parse
+functions succeed, a Just Address is returned. If any one fails, Nothing is
+returned.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">pure</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+An Applicative instance must also implement the function 'pure':
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">pure</span> <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> f a
+</pre>
+</div>
+
+<p>
+All pure does is 'lift' a value into the context of an Applicative.
+</p>
+
+<p>
+For example:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">pure</span> <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> a
+<span style="color: #6c3163; font-weight: bold;">pure</span> x <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Just</span> x
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">pure</span> <span style="color: #715ab1;">::</span> a <span style="color: #715ab1;">-&gt;</span> [a]
+<span style="color: #6c3163; font-weight: bold;">pure</span> x <span style="color: #715ab1;">=</span> [x]
+</pre>
+</div>
+
+<p>
+Where is this useful? When using an Applicative instance, you may come across
+situations where you wish to apply a function within a Functor context to a
+value which is not in that Functor.
+</p>
+
+<p>
+For example, you may wish to apply a list of functions to a single value,
+producing a new list of values, one element for the result of each function
+being applied to the value:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">myFunc</span> <span style="color: #715ab1;">::</span> [(a <span style="color: #715ab1;">-&gt;</span> b)] <span style="color: #715ab1;">-&gt;</span> a <span style="color: #715ab1;">-&gt;</span> [b]
+</pre>
+</div>
+
+<p>
+The <code>pure</code> function allows you to 'lift' a value into the context of a <b>Functor</b>
+(in this case a list):
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">myFunc</span> <span style="color: #715ab1;">::</span> [(a <span style="color: #715ab1;">-&gt;</span> b)] <span style="color: #715ab1;">-&gt;</span> a <span style="color: #715ab1;">-&gt;</span> [b]
+<span style="color: #6c3163; font-weight: bold;">myFunc</span> fs a <span style="color: #715ab1;">=</span> fs <span style="color: #715ab1;">&lt;*&gt;</span> pure a
+</pre>
+</div>
+
+<p>
+You may also wish to lift a function into the context of a Functor. We did this
+in the Address examples using the <code>(&lt;$&gt;)</code> (fmap) operator, but it could also be
+achieved using pure:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">parseAddress</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">File</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Maybe</span> <span style="color: #ba2f59; font-weight: bold;">Address</span>
+<span style="color: #6c3163; font-weight: bold;">parseAddress</span> file <span style="color: #715ab1;">=</span> pure <span style="color: #ba2f59; font-weight: bold;">Address</span> <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetName file <span style="color: #715ab1;">&lt;*&gt;</span> parseStreetNum file <span style="color: #715ab1;">&lt;*&gt;</span> parseIsApartment file
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5">References</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+<a href="http://www.seas.upenn.edu/~cis194/spring13/lectures/10-applicative.html">http://www.seas.upenn.edu/~cis194/spring13/lectures/10-applicative.html</a>
+<a href="http://wiki.ifs.hsr.ch/SemProgAnTr/files/ApplicativeFunctorsInHaskell.pdf">http://wiki.ifs.hsr.ch/SemProgAnTr/files/ApplicativeFunctorsInHaskell.pdf</a>
+<a href="https://stackoverflow.com/questions/3242361/haskell-how-is-pronounced">https://stackoverflow.com/questions/3242361/haskell-how-is-pronounced</a>
 </p>
 </div>
 </div>
@@ -392,7 +516,7 @@ functions (and kinds of types) when trying to understand functional programs.
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-09 Fri 16:45</p>
+<p class="date">Created: 2018-03-16 Fri 16:35</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

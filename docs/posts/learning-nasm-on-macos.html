@@ -3,19 +3,18 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-02-09 Fri 17:24 -->
-<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Samuel Evans-Powell</title>
-<meta name="generator" content="Org mode" />
-<meta name="author" content="Samuel Evans-Powell" />
+<!-- 2018-03-16 Fri 16:35 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Samuel Evans-Powell" />
 <link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
 <script type="text/javascript">
 /*
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -61,27 +60,27 @@ for the JavaScript code in this tag.
 <div id="content">
 <h1 class="title">Samuel Evans-Powell</h1>
 <p>
-<a id="org3e90e26"></a>
+<a id="top" name="top"></a>
 <a href="../index.html">&lt; Home</a>
 </p>
 
-<div id="outline-container-orga26b99b" class="outline-2">
-<h2 id="orga26b99b">Learning NASM on macOS</h2>
-<div class="outline-text-2" id="text-orga26b99b">
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Learning NASM on macOS</h2>
+<div class="outline-text-2" id="text-1">
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orga26b99b">Learning NASM on macOS</a>
+<li><a href="#sec-1">Learning NASM on macOS</a>
 <ul>
-<li><a href="#org611e1ed">Introduction</a></li>
-<li><a href="#org901ec82">Update your nasm</a></li>
-<li><a href="#org5f74e33">Tutorials</a></li>
-<li><a href="#orga421f4b">System call numbers are different</a></li>
-<li><a href="#org43753de">Linking with the C standard library and the '_' prefix</a></li>
-<li><a href="#org5e0afc0">Lea and Rel</a></li>
-<li><a href="#orgb84cc55">The Stack Frame</a></li>
-<li><a href="#orga418bb0">Resources</a></li>
+<li><a href="#sec-1-1">Introduction</a></li>
+<li><a href="#sec-1-2">Update your nasm</a></li>
+<li><a href="#sec-1-3">Tutorials</a></li>
+<li><a href="#sec-1-4">System call numbers are different</a></li>
+<li><a href="#sec-1-5">Linking with the C standard library and the '_' prefix</a></li>
+<li><a href="#sec-1-6">Lea and Rel</a></li>
+<li><a href="#sec-1-7">The Stack Frame</a></li>
+<li><a href="#sec-1-8">Resources</a></li>
 </ul>
 </li>
 </ul>
@@ -89,18 +88,18 @@ for the JavaScript code in this tag.
 </div>
 </div>
 
-<div id="outline-container-org611e1ed" class="outline-3">
-<h3 id="org611e1ed">Introduction</h3>
-<div class="outline-text-3" id="text-org611e1ed">
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">Introduction</h3>
+<div class="outline-text-3" id="text-1-1">
 <p>
 I recently begun learning how to use NASM on macOS and thought I'd share a few tips.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org901ec82" class="outline-3">
-<h3 id="org901ec82">Update your nasm</h3>
-<div class="outline-text-3" id="text-org901ec82">
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">Update your nasm</h3>
+<div class="outline-text-3" id="text-1-2">
 <p>
 If you're using macOS and you try to compile an asm file with your default nasm
 build, you'll probably get the following message:
@@ -108,7 +107,6 @@ build, you'll probably get the following message:
 
 <pre class="example">
 nasm: fatal: unrecognised output format `macho64' - use -hf for a list
-
 </pre>
 
 <p>
@@ -119,14 +117,13 @@ Get a more up-to-date nasm build using <a href="http://brew.sh">Homebrew</a>:
 $ brew install nasm
 $ nasm -v
 NASM version 0.98.40 (Apple Computer, Inc. build 11) compiled on Nov 15 2016
-
 </pre>
 </div>
 </div>
 
-<div id="outline-container-org5f74e33" class="outline-3">
-<h3 id="org5f74e33">Tutorials</h3>
-<div class="outline-text-3" id="text-org5f74e33">
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Tutorials</h3>
+<div class="outline-text-3" id="text-1-3">
 <p>
 Most tutorials for nasm are written with Linux in mind, so you'll usually need
 to make a few adjustments to get things working on macOS.
@@ -140,9 +137,9 @@ the <a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a> a gre
 </div>
 </div>
 
-<div id="outline-container-orga421f4b" class="outline-3">
-<h3 id="orga421f4b">System call numbers are different</h3>
-<div class="outline-text-3" id="text-orga421f4b">
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">System call numbers are different</h3>
+<div class="outline-text-3" id="text-1-4">
 <p>
 System calls numbers on macOS are different to the numbers used on Linux (e.g.
 'write' is '0x2000004' on macOS and '1' on Linux). <a href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Here's</a> a link that shows why
@@ -152,9 +149,9 @@ class of system call. You can find the system call numbers <a href="https://open
 </div>
 </div>
 
-<div id="outline-container-org43753de" class="outline-3">
-<h3 id="org43753de">Linking with the C standard library and the '_' prefix</h3>
-<div class="outline-text-3" id="text-org43753de">
+<div id="outline-container-sec-1-5" class="outline-3">
+<h3 id="sec-1-5">Linking with the C standard library and the '_' prefix</h3>
+<div class="outline-text-3" id="text-1-5">
 <p>
 When linking with the C standard library I usually use gcc and let it handle the linking for me:
 </p>
@@ -162,7 +159,6 @@ When linking with the C standard library I usually use gcc and let it handle the
 <pre class="example">
 $ /usr/local/bin/nasm -f macho64 hello.asm
 $ gcc -arch x86_64 -o hello hello.o
-
 </pre>
 
 <p>
@@ -172,6 +168,7 @@ tutorials will be written for Linux and include something like this:
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  main
         <span style="color: #3a81c3; font-weight: bold;">extern</span>  puts
 
@@ -187,6 +184,7 @@ You'll instead need to do this:
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm">        <span style="color: #3a81c3; font-weight: bold;">global</span>  _main
         <span style="color: #3a81c3; font-weight: bold;">extern</span>  _puts
 
@@ -202,6 +200,7 @@ The same goes for when exposing asm functions to C:
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm">  <span style="color: #3a81c3; font-weight: bold;">global</span> _maxofthree
 
   <span style="color: #3a81c3; font-weight: bold;">section</span> .text
@@ -213,9 +212,9 @@ The same goes for when exposing asm functions to C:
 </div>
 </div>
 
-<div id="outline-container-org5e0afc0" class="outline-3">
-<h3 id="org5e0afc0">Lea and Rel</h3>
-<div class="outline-text-3" id="text-org5e0afc0">
+<div id="outline-container-sec-1-6" class="outline-3">
+<h3 id="sec-1-6">Lea and Rel</h3>
+<div class="outline-text-3" id="text-1-6">
 <p>
 As mentioned in the <a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a>, macOS doesn't allow absolute addressing by
 default. The tutorial suggests that you: "default rel when you are
@@ -224,12 +223,13 @@ but what does that actually mean?
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;       </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 
   <span style="color: #3a81c3; font-weight: bold;">global</span> _main
@@ -239,7 +239,7 @@ but what does that actually mean?
 <span style="color: #6c3163; font-weight: bold;">_main</span>:
   <span style="color: #3a81c3; font-weight: bold;">sub</span>     rsp, 8
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>        <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Use this instead of 'mov rdi, message'</span>
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, [message]        <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Use this instead of 'mov rdi, message'</span>
   <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
   <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8
   <span style="color: #3a81c3; font-weight: bold;">ret</span>
@@ -257,9 +257,9 @@ Pretty simple :)
 </div>
 </div>
 
-<div id="outline-container-orgb84cc55" class="outline-3">
-<h3 id="orgb84cc55">The Stack Frame</h3>
-<div class="outline-text-3" id="text-orgb84cc55">
+<div id="outline-container-sec-1-7" class="outline-3">
+<h3 id="sec-1-7">The Stack Frame</h3>
+<div class="outline-text-3" id="text-1-7">
 <p>
 Probably the most painful thing I encountered was this line from the
 <a href="https://web.archive.org/web/20160304042454/http://x86-64.org/documentation/abi.pdf">AMD64 ABI Reference</a> (page 16):
@@ -267,7 +267,6 @@ Probably the most painful thing I encountered was this line from the
 
 <pre class="example">
 "The end of the input argument area shall be aligned on a 16 (32, if __m256 is passed on stack) byte boundary. In other words, the value (%rsp + 8) is always a multiple of 16 (32) when control is transferred to the function entry point.
-
 </pre>
 
 <p>
@@ -292,12 +291,13 @@ shown below (modified from the <a href="http://cs.lmu.edu/~ray/notes/nasmtutoria
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Writes "Hola, mundo" to the console using a C library. Runs on Linux or any</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">other system that does not use underscores for symbols in its C library. To</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">;</span>
-<span style="color: #2aa1ae; background-color: #ecf3ec;">;   </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
+<span style="color: #2aa1ae; background-color: #ecf3ec;">;       </span><span style="color: #2aa1ae; background-color: #ecf3ec;">/usr/local/bin/nasm -f macho64 hola.asm &amp;&amp; gcc -arch x86_64 -o hola hola.o &amp;&amp; ./hola</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">------------------------------------------------------------------------------</span>
 
   <span style="color: #3a81c3; font-weight: bold;">global</span> _main
@@ -310,7 +310,7 @@ shown below (modified from the <a href="http://cs.lmu.edu/~ray/notes/nasmtutoria
                                 <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">8 bytes to the stack, so we pad it with</span>
                                 <span style="color: #2aa1ae; background-color: #ecf3ec;">;    </span><span style="color: #2aa1ae; background-color: #ecf3ec;">another 8 bytes.</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>message<span style="color: #3a81c3;">]</span>
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, [message]
   <span style="color: #3a81c3; font-weight: bold;">call</span>    _puts
 
   <span style="color: #3a81c3; font-weight: bold;">add</span>     rsp, 8                <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">Get our old stack pointer back by removing our</span>
@@ -342,6 +342,7 @@ already 16-byte aligned (modified from the <a href="http://cs.lmu.edu/~ray/notes
 </p>
 
 <div class="org-src-container">
+
 <pre class="src src-asm"><span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">-----------------------------------------------------------------------------</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">A 64-bit Mac OSX application that writes the first 90 Fibonacci numbers. To</span>
 <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">assemble and run:</span>
@@ -370,7 +371,7 @@ already 16-byte aligned (modified from the <a href="http://cs.lmu.edu/~ray/notes
   <span style="color: #3a81c3; font-weight: bold;">push</span>    rax                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
   <span style="color: #3a81c3; font-weight: bold;">push</span>    rcx                   <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">caller - save register</span>
 
-  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, <span style="color: #3a81c3;">[</span>format<span style="color: #3a81c3;">]</span>         <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 1st parameter (format)</span>
+  <span style="color: #3a81c3; font-weight: bold;">lea</span>     rdi, [format]         <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 1st parameter (format)</span>
   <span style="color: #3a81c3; font-weight: bold;">mov</span>     rsi, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">set 2nd parameter (current_number)</span>
   <span style="color: #3a81c3; font-weight: bold;">xor</span>     rax, rax              <span style="color: #2aa1ae; background-color: #ecf3ec;">; </span><span style="color: #2aa1ae; background-color: #ecf3ec;">zero rax before call to printf</span>
                                 <span style="color: #2aa1ae; background-color: #ecf3ec;">;  </span><span style="color: #2aa1ae; background-color: #ecf3ec;">note that rax is used to indicate the number</span>
@@ -403,26 +404,34 @@ already 16-byte aligned (modified from the <a href="http://cs.lmu.edu/~ray/notes
 </div>
 </div>
 
-<div id="outline-container-orga418bb0" class="outline-3">
-<h3 id="orga418bb0">Resources</h3>
-<div class="outline-text-3" id="text-orga418bb0">
+<div id="outline-container-sec-1-8" class="outline-3">
+<h3 id="sec-1-8">Resources</h3>
+<div class="outline-text-3" id="text-1-8">
 <p>
 I hope that was helpful, here are some interesting/important links (you can also follow my progress with NASM <a href="https://github.com/sevanspowell/learn-nasm">here</a>):
 </p>
 
 <ul class="org-ul">
-<li><a href="http://www.nasm.us/xdoc/2.12.02/html/nasmdoc0.html">NASM Manual</a></li>
-<li><a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a> (especially see the section towards the bottom titled: "Using NASM on macOS")</li>
-<li><a href="https://gist.github.com/FiloSottile/7125822">NASM Hello World for x86 and x86_64 Intel Mac OS X</a></li>
-<li><a href="https://web.archive.org/web/20160304042454/http://x86-64.org/documentation/abi.pdf">AMD64 ABI reference (Web Archive link)</a></li>
-<li><a href="https://software.intel.com/en-us/articles/intel-sdm">Intel processor manuals</a></li>
-<li><a href="https://opensource.apple.com/source/xnu/xnu-1699.26.8/osfmk/mach/i386/syscall_sw.h">System call reference</a></li>
-<li><a href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64-bit Assembly on Mac OSX</a></li>
-<li><a href="http://www.kylem.net/programming/bf_interp.html">Brainf*ck interpreter in x86-64 assembly</a> (good for it's macOS focus)</li>
+<li><a href="http://www.nasm.us/xdoc/2.12.02/html/nasmdoc0.html">NASM Manual</a>
+</li>
+<li><a href="http://cs.lmu.edu/~ray/notes/nasmtutorial/">NASM Tutorial</a> (especially see the section towards the bottom titled: "Using NASM on macOS")
+</li>
+<li><a href="https://gist.github.com/FiloSottile/7125822">NASM Hello World for x86 and x86_64 Intel Mac OS X</a>
+</li>
+<li><a href="https://web.archive.org/web/20160304042454/http://x86-64.org/documentation/abi.pdf">AMD64 ABI reference (Web Archive link)</a>
+</li>
+<li><a href="https://software.intel.com/en-us/articles/intel-sdm">Intel processor manuals</a>
+</li>
+<li><a href="https://opensource.apple.com/source/xnu/xnu-1699.26.8/osfmk/mach/i386/syscall_sw.h">System call reference</a>
+</li>
+<li><a href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64-bit Assembly on Mac OSX</a>
+</li>
+<li><a href="http://www.kylem.net/programming/bf_interp.html">Brainf*ck interpreter in x86-64 assembly</a> (good for it's macOS focus)
+</li>
 </ul>
 
 <p>
-<a href="#org3e90e26">^ Back to Top</a>
+<a href="#top">^ Back to Top</a>
 </p>
 </div>
 </div>
@@ -430,7 +439,7 @@ I hope that was helpful, here are some interesting/important links (you can also
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Samuel Evans-Powell</p>
-<p class="date">Created: 2018-02-09 Fri 17:24</p>
+<p class="date">Created: 2018-03-16 Fri 16:35</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

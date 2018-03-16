@@ -8,6 +8,7 @@
 * Posts
 
 ** Recent
+  - [[file:posts/applicative.org][Applicative]]
   - [[file:posts/functor.org][Functor]]
   - [[file:posts/category-theory-and-haskell.org][Haskell and Category Theory]]
 

@@ -26,7 +26,7 @@ provide a solid foundation for us to build our programs on?
 It turns out that we do: Category Theory. For a good definition of Category
 Theory see [[*References][1]] and [[*References][2]], but essentially Category Theory is a field concerned
 with structure, composition and identity. Category Theory provides a formal
-basis for abstractions like Monoid, Functor, Applicative and Monad. 
+basis for abstractions like Monoid, Functor, Applicative and Monad.
 
 I find Category Theory exciting because it provides a more principled source of
 abstractions and ideas for programmers to build their programs upon. The nice
