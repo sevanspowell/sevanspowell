@@ -231,4 +231,4 @@ often!
 
 ** References
 
-[1] B. Yorgey, "Functors", http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html, 2013. [Online]. Available: http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html. [Accessed: 01- Feb- 2018].
+B. Yorgey, "Functors", http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html, 2013. [Online]. Available: http://www.seas.upenn.edu/%7Ecis194/spring13/lectures/09-functors.html. [Accessed: 01- Feb- 2018].

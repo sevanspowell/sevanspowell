@@ -24,7 +24,7 @@ of research that entails) to aid us in identifying abstractions? That could
 provide a solid foundation for us to build our programs on?
 
 It turns out that we do: Category Theory. For a good definition of Category
-Theory see [[*References][1]] and [[*References][2]], but essentially Category Theory is a field concerned
+Theory see [fn:1] and [fn:2], but essentially Category Theory is a field concerned
 with structure, composition and identity. Category Theory provides a formal
 basis for abstractions like Monoid, Functor, Applicative and Monad.
 
@@ -35,7 +35,7 @@ identified by Category Theory are usually very general and stable, which
 encourages the creation of general and re-usable code: a much desired property.
 
 Bartosz Milewski has a great series called /Category Theory for Programmers/
-[[*References][1]] [[*References][2]], but I'm not knowledgeable enough to be so thorough, hopefully this
+[fn:1] [fn:2], but I'm not knowledgeable enough to be so thorough, hopefully this
 series of articles will instead give you a practical but light understanding of
 Type Classes in Haskell, how they're useful to us, and their relationship with
 Category Theory.
@@ -117,6 +117,6 @@ particular function is only making use of the equivalent of ~mempty~ and
 
 ** References
 
-[1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/. [Accessed: 01- Feb- 2018].
+[fn:1] B. Milewski, "Category Theory for Programmers", Bartosz Milewski's Programming Cafe, 2014. [Online]. Available: https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/. [Accessed: 01- Feb- 2018].
 
-[2] B. Milewski, Category Theory. 2016. Available: https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM_.
+[fn:2] B. Milewski, Category Theory. 2016. Available: https://www.youtube.com/playlist?list=PLbgaMIhjbmEnaH_LTkxLI7FMa2HsnawM_.
