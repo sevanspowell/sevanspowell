@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Samuel Evans-Powell</title>
+<!-- 2018-07-25 Wed 15:47 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Samuel Evans-Powell" />
+<link rel="stylesheet" type="text/css" href="../css/stylesheet.css" />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Samuel Evans-Powell</h1>
+<p>
+<a id="top" name="top"></a>
+<a href="../index.html">&lt; Home</a>
+</p>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1">Inductive graphs</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This is a short and sweet explanation of <a href="http://web.engr.oregonstate.edu/~erwig/papers/InductiveGraphs_JFP01.pdf">this</a> paper by Martin Erweg.
+</p>
+
+<p>
+I found the paper relatively easy to digest, and would highly recommend reading
+it and the corresponding <a href="http://hackage.haskell.org/package/fgl">fgl</a> library. Nevertheless, I felt that some would
+benefit from an introduction to this paper in a different format, as well as a
+simpler implementation of the paper (which can be found <a href="https://github.com/sevanspowell/inductive-graphs">here</a>).
+</p>
+</div>
+
+<div id="outline-container-sec-1-1" class="outline-3">
+<h3 id="sec-1-1">What is a graph?</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Here we consider a graph to be a series of labelled nodes with directed edges
+between nodes. These edges too have labels (e.g. distance). You could visualize
+these graphs as destinations with roads between them.
+</p>
+
+<p>
+See <a href="https://en.wikipedia.org/wiki/Graph_theory">graph theory</a>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-2" class="outline-3">
+<h3 id="sec-1-2">What is an inductive graph?</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+We can represent a graph "inductively" as being either an empty graph or a
+"context" appended to an empty graph.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #2aa1ae; background-color: #ecf3ec;">-- </span><span style="color: #2aa1ae; background-color: #ecf3ec;">'n' and 'e' are the 'node' and 'edge' labels respectively.</span>
+<span style="color: #3a81c3; font-weight: bold;">data</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> n e <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Context</span> n e <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> n e
+               <span style="color: #715ab1;">|</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+You've likely seen an "inductive" definition like this before:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">data</span> <span style="color: #ba2f59; font-weight: bold;">List</span> a <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Cons</span> a (<span style="color: #ba2f59; font-weight: bold;">List</span> a)
+            <span style="color: #715ab1;">|</span> <span style="color: #ba2f59; font-weight: bold;">Nil</span>
+</pre>
+</div>
+
+<p>
+Returning to our graph, a context is made up of a list of edges moving away from
+the node (called successors), a list of edges moving towards the node (called
+predecessors), a node label and an int we use to reference the node.
+</p>
+
+<p>
+We can define this in Haskell like so:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #3a81c3; font-weight: bold;">type</span> <span style="color: #ba2f59; font-weight: bold;">Node</span> <span style="color: #715ab1;">=</span> <span style="color: #ba2f59; font-weight: bold;">Int</span>
+<span style="color: #3a81c3; font-weight: bold;">type</span> <span style="color: #ba2f59; font-weight: bold;">Adj</span> e <span style="color: #715ab1;">=</span> [(e, <span style="color: #ba2f59; font-weight: bold;">Node</span>)] <span style="color: #2aa1ae; background-color: #ecf3ec;">-- </span><span style="color: #2aa1ae; background-color: #ecf3ec;">[(edge label, Node to path to)]</span>
+<span style="color: #3a81c3; font-weight: bold;">type</span> <span style="color: #ba2f59; font-weight: bold;">Context</span> n e <span style="color: #715ab1;">=</span> (<span style="color: #ba2f59; font-weight: bold;">Adj</span> e, <span style="color: #ba2f59; font-weight: bold;">Node</span>, n, <span style="color: #ba2f59; font-weight: bold;">Adj</span> e) <span style="color: #2aa1ae; background-color: #ecf3ec;">-- </span><span style="color: #2aa1ae; background-color: #ecf3ec;">(predecessors, node label, node, successors)</span>
+</pre>
+</div>
+
+<p>
+As an example, we would represent:
+</p>
+
+
+<div class="figure">
+<p><img src="../img/posts/inductive-graphs/graph1.png" alt="graph1.png" />
+</p>
+</div>
+
+<p>
+as:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">g</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">Int</span>
+<span style="color: #6c3163; font-weight: bold;">g</span> <span style="color: #715ab1;">=</span> ([(350, 1)], <span style="color: #2d9574;">'b'</span>, 2, <span style="color: #ba2f59; font-weight: bold;">[]</span>) <span style="color: #715ab1;">&amp;</span>
+    (<span style="color: #ba2f59; font-weight: bold;">[]</span>, <span style="color: #2d9574;">'a'</span>, 1, <span style="color: #ba2f59; font-weight: bold;">[]</span>)         <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+Let's step through this incrementally, starting with g':
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">g'</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">Int</span>
+<span style="color: #6c3163; font-weight: bold;">g'</span> <span style="color: #715ab1;">=</span> (<span style="color: #ba2f59; font-weight: bold;">[]</span>, <span style="color: #2d9574;">'a'</span>, 1, <span style="color: #ba2f59; font-weight: bold;">[]</span>) <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+First we add the node 'a' to the graph. At this point in time node 'b' is not in
+the graph, so we choose not to list any predecessors or successors.
+</p>
+
+<p>
+Next, we add 'b':
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">g</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">Int</span>
+<span style="color: #6c3163; font-weight: bold;">g</span> <span style="color: #715ab1;">=</span> ([(350, 1)], <span style="color: #2d9574;">'b'</span>, 2, <span style="color: #ba2f59; font-weight: bold;">[]</span>) <span style="color: #715ab1;">&amp;</span> g'
+</pre>
+</div>
+
+<p>
+It is at this point we add our single edge. We list it as a predecessor of 'b'
+because the edge is moving towards 'b'.
+</p>
+
+<p>
+We consider this graph isomorphic (equal for all intents and purposes) to the
+following graph:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">isoG</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">Int</span>
+<span style="color: #6c3163; font-weight: bold;">isoG</span> <span style="color: #715ab1;">=</span> (<span style="color: #ba2f59; font-weight: bold;">[]</span>, <span style="color: #2d9574;">'a'</span>, 1, [(350, 1)]) <span style="color: #715ab1;">&amp;</span>
+       (<span style="color: #ba2f59; font-weight: bold;">[]</span>, <span style="color: #2d9574;">'b'</span>, 2, <span style="color: #ba2f59; font-weight: bold;">[]</span>)         <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+All we've done is follow the same construction logic as before, flipping the
+order of construction of the nodes (and moving the edge to the successor list of
+'a', because the edge moves away from 'a'). For our purposes, we don't care
+where the edge is stored, only that it is stored somewhere.
+</p>
+
+<p>
+The most important idea to grasp is that each node only refers to nodes created
+<b>before</b> itself. We will use this property to great effect.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-3" class="outline-3">
+<h3 id="sec-1-3">Matching</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+As a further example of this property, here is a larger graph:
+</p>
+
+
+<div class="figure">
+<p><img src="../img/posts/inductive-graphs/graph2.png" alt="graph2.png" />
+</p>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">gr</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">String</span>
+<span style="color: #6c3163; font-weight: bold;">gr</span> <span style="color: #715ab1;">=</span> ([(<span style="color: #2d9574;">"left"</span>, 2), (<span style="color: #2d9574;">"up"</span>, 3)], 1, <span style="color: #2d9574;">'a'</span>, [(<span style="color: #2d9574;">"right"</span>, 2)]) <span style="color: #715ab1;">&amp;</span>
+     (<span style="color: #ba2f59; font-weight: bold;">[]</span>, 2, <span style="color: #2d9574;">'b'</span>, [(<span style="color: #2d9574;">"down"</span>, 3)])  <span style="color: #715ab1;">&amp;</span>
+     (<span style="color: #ba2f59; font-weight: bold;">[]</span>, 3, <span style="color: #2d9574;">'c'</span>, <span style="color: #ba2f59; font-weight: bold;">[]</span>)             <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+'c' refers to no nodes (even though it does have edges connecting it to both 'a'
+and 'b'), 'b' only refers to 'c' and 'a' refers to both 'b' and 'c'.
+</p>
+
+<p>
+Note that if we remove the last node to be constructed (i.e. 'a'), we remove
+both the node and all edges connecting to it. This is because 'a' is constructed
+last, and so no other references to it may exist anywhere else in the graph
+representation.
+</p>
+
+<p>
+This is a very useful property of this representation and as such it is helpful
+to be able to re-arrange the graph such that any arbitrary node may be the one
+constructed last. This process is called 'matching'.
+</p>
+
+<p>
+Matching for 'c' would create something like the following graph (there are two
+possible representations with 'c' constructed last, this is only one of them): 
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #6c3163; font-weight: bold;">gr</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> <span style="color: #ba2f59; font-weight: bold;">Char</span> <span style="color: #ba2f59; font-weight: bold;">String</span>
+<span style="color: #6c3163; font-weight: bold;">gr</span> <span style="color: #715ab1;">=</span> ([(<span style="color: #2d9574;">"down"</span>, 2)], 3, <span style="color: #2d9574;">'c'</span>, [(<span style="color: #2d9574;">"up"</span>, 1)])    <span style="color: #715ab1;">&amp;</span>
+     ([(<span style="color: #2d9574;">"left"</span>, 2)], 1, <span style="color: #2d9574;">'a'</span>, [(<span style="color: #2d9574;">"right"</span>, 2)]) <span style="color: #715ab1;">&amp;</span>
+     (<span style="color: #ba2f59; font-weight: bold;">[]</span>, 2, <span style="color: #2d9574;">'b'</span>, <span style="color: #ba2f59; font-weight: bold;">[]</span>)                        <span style="color: #715ab1;">&amp;</span> <span style="color: #ba2f59; font-weight: bold;">Empty</span>
+</pre>
+</div>
+
+<p>
+The signature used for the match function is:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #da8b55;">-- | Given a node and a graph, return either:</span>
+<span style="color: #da8b55;">--     (Just c, g') if the node is present in the graph, where 'c' is the context</span>
+<span style="color: #da8b55;">--                  of the matched node and g' is the graph without the given node.</span>
+<span style="color: #da8b55;">--  or (Nothing, g) where g is the original graph.</span>
+<span style="color: #6c3163; font-weight: bold;">match</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Node</span> <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> n e <span style="color: #715ab1;">-&gt;</span> (<span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Context</span> n e), <span style="color: #ba2f59; font-weight: bold;">Graph</span> n e)
+</pre>
+</div>
+
+<p>
+This allows us to get a context and a graph, we can modify the context and
+re-add it to the graph or remove it entirely.
+</p>
+
+<p>
+Here is a very simple example of the usage of 'match':
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #da8b55;">-- | Remove a node from the graph. Returns original graph if node does not exist</span>
+<span style="color: #da8b55;">-- in graph. Also removes any connected edges.</span>
+<span style="color: #6c3163; font-weight: bold;">del</span> <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> gr <span style="color: #715ab1;">=&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Node</span> <span style="color: #715ab1;">-&gt;</span> gr a b <span style="color: #715ab1;">-&gt;</span> gr a b
+<span style="color: #6c3163; font-weight: bold;">del</span> v g <span style="color: #715ab1;">=</span> <span style="color: #3a81c3; font-weight: bold;">case</span> match v g <span style="color: #3a81c3; font-weight: bold;">of</span>
+  (<span style="color: #ba2f59; font-weight: bold;">Nothing</span>, <span style="color: #3a81c3; font-weight: bold;">_</span>)  <span style="color: #715ab1;">-&gt;</span> g
+  (<span style="color: #ba2f59; font-weight: bold;">Just</span> <span style="color: #3a81c3; font-weight: bold;">_</span>, g')  <span style="color: #715ab1;">-&gt;</span> g'
+</pre>
+</div>
+
+<p>
+If we find the node in the graph, we simply ignore it's context and return the
+graph without the given node.
+</p>
+
+<p>
+For convenience, we also define a 'matchAny' operation, which will perform the
+same operation as 'match', only it will not require us to provide a specific
+node, instead matching on any node in the graph. In this case I've defined a
+partial function, so we should perform a check to ensure the graph is not empty
+before calling this function.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #da8b55;">-- | Same as match, but match any node.</span>
+<span style="color: #6c3163; font-weight: bold;">matchAny</span> <span style="color: #715ab1;">::</span> gr a b <span style="color: #715ab1;">-&gt;</span> (<span style="color: #ba2f59; font-weight: bold;">Context</span> a b, gr a b)
+</pre>
+</div>
+
+<p>
+These are the core operations on an inductive graph, and the hardest to digest,
+but by no means the only operations.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-1-4" class="outline-3">
+<h3 id="sec-1-4">Actual representation</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+In reality an abstract type is used in place of our initial Haskell definition:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-haskell"><span style="color: #2aa1ae; background-color: #ecf3ec;">-- </span><span style="color: #2aa1ae; background-color: #ecf3ec;">data Graph a b = Empty | Context a b &amp; Graph a b</span>
+
+<span style="color: #3a81c3; font-weight: bold;">class</span> <span style="color: #ba2f59; font-weight: bold;">Graph</span> gr <span style="color: #3a81c3; font-weight: bold;">where</span>
+  <span style="color: #da8b55;">-- | Create an empty graph.</span>
+  empty <span style="color: #715ab1;">::</span> gr n e
+
+  <span style="color: #da8b55;">-- | Is the graph empty?</span>
+  isEmpty <span style="color: #715ab1;">::</span> gr n e <span style="color: #715ab1;">-&gt;</span> <span style="color: #ba2f59; font-weight: bold;">Bool</span>
+
+  <span style="color: #da8b55;">-- | Make a graph from lists of labelled nodes and labelled edges.</span>
+  mkGraph <span style="color: #715ab1;">::</span> [<span style="color: #ba2f59; font-weight: bold;">LNode</span> n] <span style="color: #715ab1;">-&gt;</span> [<span style="color: #ba2f59; font-weight: bold;">LEdge</span> e] <span style="color: #715ab1;">-&gt;</span> gr n e
+
+  <span style="color: #da8b55;">-- | Get a list of labelled nodes in the graph.</span>
+  labelledNodes <span style="color: #715ab1;">::</span> gr n e <span style="color: #715ab1;">-&gt;</span> [<span style="color: #ba2f59; font-weight: bold;">LNode</span> n]
+
+  <span style="color: #da8b55;">-- | Get a list of labelled edges in the graph.</span>
+  labelledEdges <span style="color: #715ab1;">::</span> (<span style="color: #ba2f59; font-weight: bold;">Eq</span> e) <span style="color: #715ab1;">=&gt;</span> gr n e <span style="color: #715ab1;">-&gt;</span> [<span style="color: #ba2f59; font-weight: bold;">LEdge</span> e]
+
+  <span style="color: #da8b55;">-- | Add a context to the given graph.</span>
+  (<span style="color: #715ab1;">&amp;</span>) <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Context</span> n e <span style="color: #715ab1;">-&gt;</span> gr n e <span style="color: #715ab1;">-&gt;</span> gr n e
+
+  <span style="color: #da8b55;">-- | Same as match, but match any node.</span>
+  matchAny <span style="color: #715ab1;">::</span> gr a b <span style="color: #715ab1;">-&gt;</span> (<span style="color: #ba2f59; font-weight: bold;">Context</span> a b, gr a b)
+
+  <span style="color: #da8b55;">-- | Finds the given node in the graph and returns the graph excluding</span>
+  <span style="color: #da8b55;">-- that node and the context of that node.</span>
+  match <span style="color: #715ab1;">::</span> <span style="color: #ba2f59; font-weight: bold;">Node</span> <span style="color: #715ab1;">-&gt;</span> gr a b <span style="color: #715ab1;">-&gt;</span> (<span style="color: #ba2f59; font-weight: bold;">Maybe</span> (<span style="color: #ba2f59; font-weight: bold;">Context</span> a b), gr a b)
+
+<span style="color: #3a81c3; font-weight: bold;">infixr</span> 5 <span style="color: #715ab1;">&amp;</span>
+</pre>
+</div>
+
+<p>
+We then provide an instance of this type class for our particular implementation
+(in our case a Haskell IntMap was used).
+</p>
+
+<p>
+Hopefully this article provides enough of a foundation for you to further
+explore inductive graphs on your own. Please feel free to get in touch if you
+have any questions/pointers for me.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Samuel Evans-Powell</p>
+<p class="date">Created: 2018-07-25 Wed 15:47</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

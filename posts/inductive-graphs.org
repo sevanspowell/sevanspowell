@@ -5,7 +5,7 @@
 This is a short and sweet explanation of [[http://web.engr.oregonstate.edu/~erwig/papers/InductiveGraphs_JFP01.pdf][this]] paper by Martin Erweg.
 
 I found the paper relatively easy to digest, and would highly recommend reading
-it and the corresponding [[http://hackage.haskell.org/package/fgl][fgl]] library. Nevertheless I felt that some would
+it and the corresponding [[http://hackage.haskell.org/package/fgl][fgl]] library. Nevertheless, I felt that some would
 benefit from an introduction to this paper in a different format, as well as a
 simpler implementation of the paper (which can be found [[https://github.com/sevanspowell/inductive-graphs][here]]).
 
@@ -49,23 +49,7 @@ We can define this in Haskell like so:
 
 As an example, we would represent:
 
-#+begin_src latex :file fsa.png :packages '(("" "tikz")) :border 1em :results raw
-  \usetikzlibrary{arrows.meta}
-  \begin{document}
-  \begin{tikzpicture}
-  \begin{scope}[every node/.style={circle,thick,draw}]
-      \node (A) at (0,0) {A};
-      \node (B) at (3,0) {B};
-  \end{scope}
-
-  \begin{scope}[>={Stealth[black]},
-                every node/.style={fill=white,circle},
-                every edge/.style={draw=black,thick}]
-      \path [->] (A) edge node {$350$} (B);
-  \end{scope}
-  \end{tikzpicture}
-  \end{document}
-#+end_src
+[[../img/posts/inductive-graphs/graph1.png]]
 
 as:
 
@@ -114,29 +98,9 @@ The most important idea to grasp is that each node only refers to nodes created
 
 ** Matching
 
-As a further example of this property, here is a larger graph.
+As a further example of this property, here is a larger graph:
 
-#+begin_src latex :file fsa.png :packages '(("" "tikz")) :border 1em :results raw
-  \usetikzlibrary{arrows.meta}
-  \begin{document}
-  \begin{tikzpicture}
-  \begin{scope}[every node/.style={circle,thick,draw}]
-      \node (A) at (0,0)    {A};
-      \node (B) at (3,0)    {B};
-      \node (C) at (1.5,-3) {C};
-  \end{scope}
-
-  \begin{scope}[>={Stealth[black]},
-                every node/.style={fill=white,circle},
-                every edge/.style={draw=black,thick}]
-      \path [->] (A) edge node {$right$} (B);
-      \path [->] (B) edge node {$left$}  (A);
-      \path [->] (B) edge node {$down$}  (C);
-      \path [->] (C) edge node {$up$}    (A);
-  \end{scope}
-  \end{tikzpicture}
-  \end{document}
-#+end_src
+[[../img/posts/inductive-graphs/graph2.png]]
 
 #+BEGIN_SRC haskell
   gr :: Graph Char String
@@ -249,4 +213,4 @@ We then provide an instance of this type class for our particular implementation
 
 Hopefully this article provides enough of a foundation for you to further
 explore inductive graphs on your own. Please feel free to get in touch if you
-have any questions/pointers.
+have any questions/pointers for me.

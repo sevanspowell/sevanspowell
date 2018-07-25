@@ -1,0 +1,17 @@
+\documentclass[preview]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\begin{document}
+\begin{tikzpicture}
+\begin{scope}[every node/.style={circle,thick,draw}]
+    \node (A) at (0,0) {A};
+    \node (B) at (3,0) {B};
+\end{scope}
+
+\begin{scope}[>={Stealth[black]},
+            every node/.style={fill=white,circle},
+            every edge/.style={draw=black,thick}]
+    \path [->] (A) edge node {$350$} (B);
+\end{scope}
+\end{tikzpicture}
+\end{document}
